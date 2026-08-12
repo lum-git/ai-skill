@@ -1,22 +1,27 @@
-# prototype-generator
+# ai-skill
 
-> 基于 Skill 文档体系的**原型 HTML 项目生成器**，通过 AI 自动生成完整的后台管理系统原型。
+> 基于 Skill 文档体系的 **AI 技能集合**，提供原型 HTML 项目生成、项目部署等自动化能力。
 
 ## 项目名称
-原型 HTML 项目生成器（prototype-generator）
+AI Skill 技能集合（ai-skill）
 
 ## 项目简介
 
-本项目提供一套完整的 AI Skill 规范，让 AI 能够：
+本项目提供多套 AI Skill 规范，让 AI 能够：
 
 - 根据需求描述自动生成完整的 HTML 原型项目
 - 在已有项目中按规范新增功能模块
 - 保持所有页面在代码写法、视觉风格、交互模式上的严格一致
 - 同时覆盖 PC 管理端、App 移动端和登录页
+- 将前端构建产物通过 rsync 部署到公司内网 Nginx 服务器
 
-## 核心特性
+## 技能列表
 
-### 双端覆盖
+### 1. prototype-generator — 原型 HTML 项目生成器
+
+根据需求描述自动生成完整的后台管理系统原型，或在已有项目中新增功能模块。
+
+#### 双端覆盖
 
 | 端 | 技术方案 | 特点 |
 |---|---------|------|
@@ -24,7 +29,7 @@
 | **App 移动端** | 手机模型框架 | 390x844px 圆角外框，flexbox 列布局，底部 Tab Bar |
 | **登录页** | 独立页面 | 品牌蓝渐变背景，居中登录卡片 |
 
-### 设计规范
+#### 设计规范
 
 | 规范 | 说明 |
 |------|------|
@@ -34,7 +39,7 @@
 | 暗色模式 | `data-theme="dark"` 一键切换，完整适配 |
 | 交互模式 | PC 端弹窗模式(Modal)，App 端页面跳转，登录页独立入口 |
 
-### 内置工具函数（components.js，30+）
+#### 内置工具函数（components.js，30+）
 
 | 分类 | 函数 |
 |------|------|
@@ -48,27 +53,47 @@
 | 标签页 | `openTab()`, `switchTab()`, `closeTab()`, `closeAll()` |
 | 格式化 | `formatDate()`, `formatMoney()` |
 
+### 2. sales-project-deploy — 销售项目部署
+
+将前端构建产物通过 rsync 同步部署到公司内网 Nginx 服务器。
+
+| 特性 | 说明 |
+|------|------|
+| 传输方式 | rsync over SSH |
+| 配置管理 | 统一 conf.md，账号密码通过 Secrets API 实时获取不落盘 |
+| 部署方式 | `bash deploy.sh <本地产物路径> <项目拼音首字母>` |
+| 同步策略 | `--delete` 确保远程与本地完全一致 |
+
 ## Skill 文件结构
 
 ```
-skills/prototype-generator/
-├── SKILL.md                       # Skill 定义
-│                                  #   - 核心能力说明
-│                                  #   - 从零生成项目的完整步骤
-│                                  #   - PC 端/App 端关键约束
-│                                  #   - 输出检查清单
-└── references/
-    └── examples.md                # 参考模板
-                                   #   - PC 端页面模板（列表/详情/表单/Dashboard）
-                                   #   - App 端页面模板（Tab 页/子页/组件）
-                                   #   - 登录页/框架页/导航入口页模板
-                                   #   - 代码风格规范
-                                   #   - 附录 A~D：共享资源完整代码（CSS/JS）
+skills/
+├── prototype-generator/
+│   ├── SKILL.md                       # Skill 定义
+│   │                                  #   - 核心能力说明
+│   │                                  #   - 从零生成项目的完整步骤
+│   │                                  #   - PC 端/App 端关键约束
+│   │                                  #   - 输出检查清单
+│   └── references/
+│       └── examples.md                # 参考模板
+│                                      #   - PC 端页面模板（列表/详情/表单/Dashboard）
+│                                      #   - App 端页面模板（Tab 页/子页/组件）
+│                                      #   - 登录页/框架页/导航入口页模板
+│                                      #   - 代码风格规范
+│                                      #   - 附录 A~D：共享资源完整代码（CSS/JS）
+└── sales-project-deploy/
+    ├── SKILL.md                       # Skill 定义
+    │                                  #   - 部署执行流程
+    ├── assets/                        # 静态资源
+    ├── references/
+    │   └── conf.md                    # 部署参数配置
+    └── scripts/
+        └── deploy.sh                  # 部署执行脚本
 ```
 
 ## 使用方式
 
-### 新建项目
+### 原型生成 — 新建项目
 
 向 AI 描述需求即可：
 
@@ -82,11 +107,21 @@ AI 会自动：
 5. 生成所有业务页面（PC + App 双端）
 6. 注册到框架并完成导航连接
 
-### 在已有项目中新增模块
+### 原型生成 — 在已有项目中新增模块
 
 > "在项目中添加订单管理模块"
 
 AI 会按模板创建新页面并自动更新框架的 sidebar 菜单和页面注册。
+
+### 项目部署
+
+> "帮我部署项目到 Nginx"
+
+AI 会：
+1. 读取 conf.md 服务器配置，通过 Secrets API 获取账号密码
+2. 确认本地产物路径和项目名称
+3. 执行 rsync 同步部署
+4. 验证部署结果
 
 ## 技术栈
 
@@ -108,9 +143,8 @@ AI 会按模板创建新页面并自动更新框架的 sidebar 菜单和页面�
 
 ## 项目状态
 
-- Skill 定义已完成
-- 参考模板完整（含 4 套附录完整代码）
-- 生成流水线就绪
+- prototype-generator：Skill 定义已完成，参考模板完整（含 4 套附录完整代码），生成流水线就绪
+- sales-project-deploy：Skill 定义已完成，deploy.sh 脚本和 conf.md 配置就绪
 
 ## 开源协议
 

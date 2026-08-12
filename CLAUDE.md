@@ -1,4 +1,4 @@
-# CLAUDE.md - 原型 HTML 生成器 Skill
+# CLAUDE.md - AI Skill 技能集合
 
 > 本文件为 AI 辅助开发工作流提供项目规范和 Skill 使用指南。
 
@@ -6,9 +6,9 @@
 
 ## 项目概述
 
-基于 Skill 文档体系的**原型 HTML 项目生成器**，可根据需求描述自动生成完整的后台管理系统原型（PC 管理端 + App 移动端 + 登录页），或在已有项目中新增功能模块。所有页面在代码写法、视觉风格、交互模式上保持严格一致。
+基于 Skill 文档体系的 **AI 技能集合**，目前包含两套技能：原型 HTML 项目生成器（根据需求自动生成后台管理系统原型）和销售项目部署（通过 rsync 将构建产物部署到公司内网 Nginx 服务器）。
 
-**技术栈**: HTML5 + Bootstrap 5.3 + Bootstrap Icons 1.13 + Vanilla JS
+**技术栈**: HTML5 + Bootstrap 5.3 + Bootstrap Icons 1.13 + Vanilla JS / Bash + rsync
 
 ---
 
@@ -17,6 +17,7 @@
 | Skill | 路径 | 说明 |
 |-------|------|------|
 | prototype-generator | [skills/prototype-generator/SKILL.md](skills/prototype-generator/SKILL.md) | 从零生成完整原型 HTML 项目，支持新增模块 |
+| sales-project-deploy | [skills/sales-project-deploy/SKILL.md](skills/sales-project-deploy/SKILL.md) | 将构建产物通过 rsync 部署到公司内网 Nginx 服务器 |
 
 ---
 
@@ -27,6 +28,7 @@
 | **从零生成项目** | 完整目录结构 + 共享资源 + 框架页 + 登录页 + 导航入口页 + 业务页面 |
 | **新增功能模块** | 在已有项目中按规范新增页面，自动更新框架注册 |
 | **双端覆盖** | PC 管理端（iframe SPA）+ App 移动端（手机模型框架）+ 登录页 |
+| **项目部署** | rsync over SSH 同步部署，配置集中管理，账号密码实时获取不落盘 |
 
 ---
 
@@ -99,10 +101,18 @@ project/
 ## Skill 文件结构
 
 ```
-skills/prototype-generator/
-├── SKILL.md                       # Skill 定义：能力说明、生成步骤、PC/App 约束、检查清单
-└── references/
-    └── examples.md                # 参考模板：PC/App 页面模板、登录页/框架页/入口页、附录（CSS/JS）
+skills/
+├── prototype-generator/
+│   ├── SKILL.md                       # Skill 定义：能力说明、生成步骤、PC/App 约束、检查清单
+│   └── references/
+│       └── examples.md                # 参考模板：PC/App 页面模板、登录页/框架页/入口页、附录（CSS/JS）
+└── sales-project-deploy/
+    ├── SKILL.md                       # Skill 定义：部署执行流程
+    ├── assets/                        # 静态资源
+    ├── references/
+    │   └── conf.md                    # 部署参数配置
+    └── scripts/
+        └── deploy.sh                  # 部署执行脚本
 ```
 
 ---
@@ -111,9 +121,10 @@ skills/prototype-generator/
 
 | 场景 | 触发方式 | 说明 |
 |------|---------|------|
-| 新建项目 | "帮我生成一个XXX管理系统原型" | 从零生成完整原型项目 |
+| 新建原型项目 | "帮我生成一个XXX管理系统原型" | 从零生成完整原型项目 |
 | 新增模块 | "在现有项目中添加XXX功能" | 按规范新增页面并注册到框架 |
 | 修改页面 | "修改XXX列表页/详情页" | 基于现有模板修改业务页面 |
+| 项目部署 | "部署项目到Nginx"/"发布" | 通过 rsync 将构建产物同步到远程服务器 |
 
 ---
 
