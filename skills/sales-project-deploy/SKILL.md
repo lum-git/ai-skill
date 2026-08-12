@@ -14,9 +14,9 @@ sales-project-deploy/
 ├── SKILL.md
 ├── assets/               # 静态资源（暂无）
 ├── references/
-│   └── conf.md           # 部署参数配置
-└── scripts/
-    └── deploy.py         # 部署执行脚本
+│   ├── conf.md           # 部署参数配置
+│   └── deploy.py         # 部署执行脚本
+└── scripts/              # 保留空目录占位
 ```
 
 所有配置在 [conf.md](./references/conf.md) 中统一管理。账号密码通过 Secrets API 实时获取，不落盘。
@@ -57,23 +57,21 @@ Authorization: Bearer {PAPERCLIP_API_KEY}
 
 ### 4. 执行部署
 
-运行部署脚本（需 python3 + sshpass + rsync）：
+运行部署脚本（纯 Python，仅需 `pip install paramiko`）：
 
 ```bash
-python scripts/deploy.py <本地产物路径> <项目拼音首字母>
+python references/deploy.py <本地产物路径> <项目拼音首字母>
 ```
 
-脚本内部通过 `sshpass` + `rsync` 执行同步：
+脚本通过 paramiko SFTP 同步本地目录到远程：
 
-- `-a`：归档模式，保留权限和时间戳
-- `-v -z`：详细输出 + 传输压缩
-- `--delete`：删除远程多余文件，确保完全一致
-- `--progress`：显示进度
-- `LOCAL_PATH` 自动追加 `/`，同步目录内容而非目录本身
+- 自动创建远程目录结构
+- 对比文件大小，跳过未变化的文件
+- `--delete` 等效行为：删除远程多余文件和空目录
 
 ### 5. 验证结果
 
-检查 rsync 命令的退出码，确认部署成功或失败。
+检查脚本退出码，确认部署成功或失败。
 
 ## 部署说明
 

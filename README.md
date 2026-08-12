@@ -55,14 +55,15 @@ AI Skill 技能集合（ai-skill）
 
 ### 2. sales-project-deploy — 销售项目部署
 
-将前端构建产物通过 rsync 同步部署到公司内网 Nginx 服务器。
+将前端构建产物部署到公司内网 Nginx 服务器。
 
 | 特性 | 说明 |
 |------|------|
-| 传输方式 | rsync over SSH |
+| 传输方式 | Python paramiko（自动选择 SFTP 或 tar+SSH pipe），等同 rsync -avz --delete --progress |
 | 配置管理 | 统一 conf.md，账号密码通过 Secrets API 实时获取不落盘 |
-| 部署方式 | `bash deploy.sh <本地产物路径> <项目拼音首字母>` |
-| 同步策略 | `--delete` 确保远程与本地完全一致 |
+| 部署方式 | `python references/deploy.py <本地产物路径> <项目拼音首字母>` |
+| 同步策略 | `--delete` 等效行为，确保远程与本地完全一致 |
+| 依赖 | `pip install paramiko`（纯 Python，无需 rsync/sshpass） |
 
 ## Skill 文件结构
 
@@ -86,9 +87,9 @@ skills/
     │                                  #   - 部署执行流程
     ├── assets/                        # 静态资源
     ├── references/
-    │   └── conf.md                    # 部署参数配置
-    └── scripts/
-        └── deploy.sh                  # 部署执行脚本
+    │   ├── conf.md                    # 部署参数配置
+    │   └── deploy.py                  # 部署执行脚本（Python paramiko）
+    └── scripts/                       # 保留空目录
 ```
 
 ## 使用方式
@@ -120,8 +121,8 @@ AI 会按模板创建新页面并自动更新框架的 sidebar 菜单和页面�
 AI 会：
 1. 读取 conf.md 服务器配置，通过 Secrets API 获取账号密码
 2. 确认本地产物路径和项目名称
-3. 执行 rsync 同步部署
-4. 验证部署结果
+3. 执行 python deploy.py 同步部署
+4. 输出访问地址
 
 ## 技术栈
 
@@ -144,7 +145,7 @@ AI 会：
 ## 项目状态
 
 - prototype-generator：Skill 定义已完成，参考模板完整（含 4 套附录完整代码），生成流水线就绪
-- sales-project-deploy：Skill 定义已完成，deploy.sh 脚本和 conf.md 配置就绪
+- sales-project-deploy：Skill 定义已完成，deploy.py 脚本和 conf.md 配置就绪
 
 ## 开源协议
 

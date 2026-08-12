@@ -7,6 +7,7 @@
 | `DEPLOY_IP` | `192.168.1.10` | 远程服务器 IP |
 | `DEPLOY_PORT` | `22` | SSH 端口 |
 | `DEPLOY_REMOTE_BASE` | `/volume1/nginx/nginx-www/salesProject` | 远程部署路径 |
+| `URL_BASE` | `http://192.168.1.10/` | 访问地址前缀，部署后拼接 `{项目拼音}/` |
 
 ## 关联的 Secret
 
