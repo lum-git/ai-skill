@@ -53,14 +53,16 @@ Authorization: Bearer {PAPERCLIP_API_KEY}
 
 向用户确认以下信息：
 - 本地产物路径（打包后的 dist 目录等）
-- 项目名称拼音首字母，从用户的任务描述中提取
+
+同时获取当前任务 id，作为部署子目录名。
 
 ### 4. 执行部署
 
 运行部署脚本（纯 Python，仅需 `pip install paramiko`）：
 
 ```bash
-python references/deploy.py <本地产物路径> <项目拼音首字母>
+python references/deploy.py <本地产物路径> <当前任务id>
+# 示例: python references/deploy.py ./dist HYSQZC-971
 ```
 
 脚本通过 paramiko SFTP 同步本地目录到远程：
@@ -75,4 +77,4 @@ python references/deploy.py <本地产物路径> <项目拼音首字母>
 
 ## 部署说明
 
-将本地产物目录下的所有内容 rsync 到远程 `salesProject/{项目拼音首字母}/` 子目录中。
+将本地产物目录下的所有内容 rsync 到远程 `salesProject/{当前任务id}/` 子目录中。

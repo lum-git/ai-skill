@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """销售项目部署脚本（纯 Python，等同于 rsync -avz --delete --progress）
 用法:
-  python deploy.py <本地产物路径> <项目拼音首字母>
+  python deploy.py <本地产物路径> <当前任务id>
+  示例: python deploy.py ./dist HYSQZC-971
 
 依赖: pip install paramiko
 账号密码通过 Paperclip Secrets API 获取
@@ -403,11 +404,11 @@ def deploy_sync(host: str, port: int, user: str, password: str,
 
 def main():
     if len(sys.argv) < 3:
-        print("用法: python deploy.py <本地产物路径> <项目拼音首字母>")
+        print("用法: python deploy.py <本地产物路径> <当前任务id>")
         sys.exit(1)
 
     local_path = sys.argv[1]
-    project_name = sys.argv[2]
+    task_id = sys.argv[2]
 
     print("正在获取账号密码...")
     deploy_account = get_secret("deploy-deploy_account")
@@ -432,7 +433,7 @@ def main():
         print("conf.md 中缺少 DEPLOY_REMOTE_BASE")
         sys.exit(1)
 
-    remote_path = f"{deploy_remote_base.rstrip('/')}/{project_name}"
+    remote_path = f"{deploy_remote_base.rstrip('/')}/{task_id}"
     print(f"目标: {deploy_account}@{deploy_ip}:{deploy_port} → {remote_path}")
 
     deploy_sync(
@@ -446,7 +447,7 @@ def main():
 
     # 输出访问地址
     url_base = read_conf("URL_BASE") or f"http://{deploy_ip}/"
-    url = f"{url_base.rstrip('/')}/{project_name}/"
+    url = f"{url_base.rstrip('/')}/{task_id}/"
     print(f"\n访问地址: {url}")
 
 
