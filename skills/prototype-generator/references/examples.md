@@ -27,7 +27,7 @@
     <!-- ===== 面包屑 ===== -->
     <div class="page-header">
       <ol class="breadcrumb mb-0">
-        <li class="breadcrumb-item"><a href="#" onclick="parent.openTab('index-content.html','首页','bi-speedometer2')">首页</a></li>
+        <li class="breadcrumb-item"><a href="index-content.html" target="mainFrame" onclick="try{parent.document.querySelectorAll('.sidebar-nav-link').forEach(function(s){s.classList.remove('active');});var m=parent.document.querySelector('.sidebar-nav-link[data-url=&quot;index-content.html&quot;]');if(m)m.classList.add('active');}catch(e){}">首页</a></li>
         <li class="breadcrumb-item active" aria-current="page">[模块名]</li>
       </ol>
     </div>
@@ -186,8 +186,8 @@
 ```html
 <div class="page-header">
   <ol class="breadcrumb mb-0">
-    <li class="breadcrumb-item"><a href="#" onclick="parent.openTab('index-content.html','首页','bi-speedometer2')">首页</a></li>
-    <li class="breadcrumb-item"><a href="#" onclick="parent.openTab('[list].html','[列表]','bi-list-ul')">[列表]</a></li>
+    <li class="breadcrumb-item"><a href="index-content.html" target="mainFrame">首页</a></li>
+    <li class="breadcrumb-item"><a href="[list].html" target="mainFrame">[列表]</a></li>
     <li class="breadcrumb-item active">[详情]</li>
   </ol>
 </div>
@@ -513,7 +513,7 @@
   </div>
   <div class="header-right">
     <span class="env-badge non-secret">正式版</span>
-    <span class="header-notification" onclick="openTab('messages.html','消息通知','bi-bell')"><i class="bi bi-bell"></i><span class="badge rounded-pill bg-danger badge-notify">3</span></span>
+    <span class="header-notification" onclick="document.getElementById('mainFrame').src='messages.html';document.querySelectorAll('.sidebar-nav-link').forEach(function(s){s.classList.remove('active');});var m=document.querySelector('.sidebar-nav-link[data-url=&quot;messages.html&quot;]');if(m)m.classList.add('active');"><i class="bi bi-bell"></i><span class="badge rounded-pill bg-danger badge-notify">3</span></span>
     <div class="header-user dropdown">
       <div class="d-flex align-items-center gap-2" data-bs-toggle="dropdown"><div class="user-avatar">管</div><span class="user-name">管理员 <i class="bi bi-chevron-down" style="font-size:0.7rem;"></i></span></div>
       <ul class="dropdown-menu dropdown-menu-end">
@@ -527,29 +527,46 @@
 <div class="main-layout">
   <aside class="sidebar"><!-- MENU_ITEMS_PLACEHOLDER --></aside>
   <div class="main-content">
-    <div id="tagsviewContainer"><div id="tagsviewScroll"><div id="tagsviewWrapper"></div></div><div class="tagsview-actions"><button class="btn btn-sm btn-link text-muted" onclick="closeAll()"><i class="bi bi-x-circle-fill"></i></button></div></div>
-    <div style="position:relative;margin-top:var(--tagsview-height);"><div class="iframe-loading-overlay" style="display:none;"><div class="spinner-border text-primary"></div></div><iframe name="contentFrame" id="contentFrame" src="index-content.html" style="border:none;width:100%;min-height:calc(100vh - var(--header-height) - var(--tagsview-height));" sandbox="allow-same-origin allow-scripts allow-forms allow-popups"></iframe></div>
+    <div style="position:relative;"><div class="iframe-loading-overlay" id="iframeLoading" style="display:none;"><div class="spinner-border text-primary"></div></div><iframe name="mainFrame" id="mainFrame" src="index-content.html" style="border:none;width:100%;min-height:calc(100vh - var(--header-height));" sandbox="allow-same-origin allow-scripts allow-forms allow-popups"></iframe></div>
   </div>
 </div>
 <div id="sidebarBackdrop" class="sidebar-backdrop" onclick="closeSidebar()"></div>
 <button onclick="toggleTheme()" class="btn btn-sm btn-outline-secondary rounded-circle" style="position:fixed;bottom:1rem;right:1rem;width:36px;height:36px;z-index:1050;"><i class="bi bi-moon-stars"></i></button>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-<script>window._knownPages=['index-content.html','messages.html',/*...*/];</script>
 <script src="../shared/components.js"></script>
-<script>if(localStorage.getItem('sidebar-collapsed')==='1')document.body.classList.add('sidebar-collapsed');initTabs();</script>
+<script>
+  // PC 框架菜单跳转：原生 <a target="mainFrame"> + 同步 .active + 显示 loading
+  document.querySelectorAll('.sidebar-nav-link[data-url]').forEach(function(item){
+    item.addEventListener('click', function(e){
+      e.preventDefault();
+      document.querySelectorAll('.sidebar-nav-link').forEach(function(s){s.classList.remove('active');});
+      this.classList.add('active');
+      var url = this.getAttribute('data-url');
+      var frame = document.getElementById('mainFrame');
+      var overlay = document.getElementById('iframeLoading');
+      if (frame && url) { if (overlay) overlay.style.display = 'flex'; frame.src = url; }
+    });
+  });
+  // iframe 加载完关闭 loading
+  var _mainFrame = document.getElementById('mainFrame');
+  if (_mainFrame) _mainFrame.addEventListener('load', function(){ var o=document.getElementById('iframeLoading'); if(o) o.style.display='none'; });
+  // 侧边栏折叠状态持久化
+  if (localStorage.getItem('sidebar-collapsed')==='1') document.body.classList.add('sidebar-collapsed');
+  // 菜单跳转通过原生 <a target="mainFrame">，框架不提供额外跳转 API
+</script>
 </body>
 </html>
 ```
 
 **Sidebar 菜单项格式：**
 ```html
-<a class="sidebar-nav-link active" data-url="index-content.html" onclick="openTab('index-content.html','工作台','bi-speedometer2')"><i class="bi bi-speedometer2"></i> <span>工作台</span></a>
+<a class="sidebar-nav-link active" data-url="index-content.html" href="index-content.html" target="mainFrame"><i class="bi bi-speedometer2"></i> <span>工作台</span></a>
 <div class="sidebar-divider"></div>
 <div class="sidebar-section-title">系统管理</div>
-<a class="sidebar-nav-link" data-url="[file].html" onclick="openTab('[file].html','[名称]','bi-[icon]')"><i class="bi bi-[icon]"></i> <span>[名称]</span></a>
+<a class="sidebar-nav-link" data-url="[file].html" href="[file].html" target="mainFrame"><i class="bi bi-[icon]"></i> <span>[名称]</span></a>
 <!-- 折叠分组 -->
 <a class="sidebar-nav-link" data-bs-toggle="collapse" data-bs-target="#navGroup1" aria-expanded="false" href="#navGroup1" role="button"><i class="bi bi-[icon]"></i> <span>[分组名]</span></a>
-<div class="collapse" id="navGroup1"><a class="sidebar-nav-link" data-url="[file].html" onclick="openTab('[file].html','[名称]','bi-[icon]')"><i class="bi bi-[icon]"></i> <span>[名称]</span></a></div>
+<div class="collapse" id="navGroup1"><a class="sidebar-nav-link" data-url="[file].html" href="[file].html" target="mainFrame"><i class="bi bi-[icon]"></i> <span>[名称]</span></a></div>
 ```
 
 ---
@@ -599,7 +616,7 @@ CSS：始终用 `var(--primary)`、`var(--gray-200)` 等变量，不硬编码色
   --space-xs:4px;--space-sm:8px;--space-md:12px;--space-lg:16px;--space-xl:20px;--space-2xl:24px;--space-3xl:32px;
   --font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
   --font-size-base:13px;--font-size-md:14px;--font-size-lg:16px;--font-size-xl:18px;--font-size-2xl:20px;--font-size-3xl:24px;
-  --sidebar-width:220px;--sidebar-collapsed-width:64px;--tagsview-height:0px;
+  --sidebar-width:220px;--sidebar-collapsed-width:64px;
 }
 ```
 
@@ -674,11 +691,9 @@ a:hover { color: var(--primary-hover); }
 .sidebar-collapsed .sidebar .collapse { display: none !important; }
 .sidebar-collapsed .sidebar .sidebar-nav-link.active::before { display: none; }
 .sidebar-collapsed .main-content { margin-left: var(--sidebar-collapsed-width); }
-.sidebar-collapsed #tagsviewContainer { left: var(--sidebar-collapsed-width); }
 .sidebar-backdrop { display: none; position: fixed; inset: 0; background: var(--bg-mask); z-index: 1005; }
 
 .main-content { flex: 1; margin-left: var(--sidebar-width); min-width: 0; }
-#tagsviewContainer { display: none; }
 .iframe-loading-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.7); display: flex; align-items: center; justify-content: center; z-index: 10; }
 
 /* ---- Breadcrumb ---- */
@@ -830,10 +845,13 @@ th.sortable::after { content: ' ↕'; font-size: 10px; color: var(--text-disable
 
 以下为完整的共享工具库，生成项目时直接写入 `shared/components.js`：
 
+本工具库只提供"页面内"工具函数（Toast/弹窗/分页/排序/筛选/主题/侧边栏）。PC 端菜单跳转通过原生 `<a href="xxx.html" target="mainFrame">` 完成，业务页面无需自写跳转逻辑。
+
 ```javascript
 /* ============================================================
    共享工具库 — 原型项目
-   提供 30+ 个通用函数：状态切换/Toast/确认弹窗/分页/排序/筛选/主题
+   提供：状态切换/Toast/确认弹窗/分页/排序/筛选/主题/侧边栏
+   说明：菜单跳转通过原生 <a target="mainFrame"> 完成
    ============================================================ */
 
 function showToast(msg, type) {
@@ -912,64 +930,6 @@ function toggleSidebar() {
 }
 function closeSidebar() {
   if (window.innerWidth < 992) { document.body.classList.add('sidebar-collapsed'); document.getElementById('sidebarBackdrop').style.display = 'none'; }
-}
-
-var openTabs = {};
-function openTab(url, title, icon) {
-  if (openTabs[url]) { switchTab(url); return; }
-  var wrapper = document.getElementById('tagsviewWrapper');
-  var item = document.createElement('div');
-  item.className = 'tagsview-item active'; item.dataset.url = url;
-  item.innerHTML = '<i class="bi ' + (icon || 'bi-file-text') + ' me-1"></i>' + title + '<span class="tab-close" onclick="event.stopPropagation();closeTab(\'' + url + '\')">&times;</span>';
-  item.onclick = function() { switchTab(url); };
-  wrapper.appendChild(item);
-  openTabs[url] = { title: title, icon: icon || 'bi-file-text' };
-  switchTab(url);
-  var scrollEl = document.getElementById('tagsviewScroll');
-  if (scrollEl) scrollEl.scrollLeft = scrollEl.scrollWidth;
-  if (typeof updateSidebarActive === 'function') updateSidebarActive(url);
-}
-function switchTab(url) {
-  var wrapper = document.getElementById('tagsviewWrapper');
-  wrapper.querySelectorAll('.tagsview-item').forEach(function(el) { el.classList.remove('active'); });
-  var match = wrapper.querySelector('.tagsview-item[data-url="' + url + '"]');
-  if (match) match.classList.add('active');
-  var iframe = document.getElementById('contentFrame');
-  var overlay = document.querySelector('.iframe-loading-overlay');
-  if (overlay) overlay.style.display = 'block';
-  if (iframe) { iframe.src = url; iframe.onload = function() { if (overlay) overlay.style.display = 'none'; }; }
-  if (typeof updateSidebarActive === 'function') updateSidebarActive(url);
-}
-function closeTab(url) {
-  var wrapper = document.getElementById('tagsviewWrapper'), item = wrapper.querySelector('.tagsview-item[data-url="' + url + '"]');
-  if (!item) return;
-  var wasActive = item.classList.contains('active'), idx = Array.from(wrapper.children).indexOf(item);
-  item.remove(); delete openTabs[url];
-  if (!wasActive) return;
-  var children = wrapper.children;
-  if (children.length === 0) { document.getElementById('contentFrame').src = 'about:blank'; return; }
-  var nextIdx = Math.min(idx, children.length - 1);
-  children[nextIdx].classList.add('active');
-  switchTab(children[nextIdx].dataset.url);
-}
-function closeCurrent() {
-  var active = document.getElementById('tagsviewWrapper').querySelector('.tagsview-item.active');
-  if (active) closeTab(active.dataset.url);
-}
-function closeAll() {
-  document.getElementById('tagsviewWrapper').innerHTML = '';
-  openTabs = {};
-  document.getElementById('contentFrame').src = 'about:blank';
-}
-function initTabs() {
-  var homeUrl = 'index-content.html';
-  var wrapper = document.getElementById('tagsviewWrapper');
-  var item = document.createElement('div');
-  item.className = 'tagsview-item active'; item.dataset.url = homeUrl;
-  item.innerHTML = '<i class="bi bi-speedometer2 me-1"></i>首页<span class="tab-close" style="display:none;">×</span>';
-  item.onclick = function() { switchTab(homeUrl); };
-  wrapper.appendChild(item);
-  openTabs[homeUrl] = { title: '首页', icon: 'bi-speedometer2' };
 }
 
 function formatDate(d) { if (!d) return ''; var dt = new Date(d); return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0'); }
@@ -1068,6 +1028,7 @@ body.phone-frame-body {
 .task-card {
   background: #ffffff; border-radius: 10px; padding: 14px 16px;
   margin-bottom: 2px; cursor: pointer; border: none; border-left: none;
+  text-decoration: none; display: block; color: inherit;
 }
 .task-card:active { background: #eef0f4; }
 .task-card .task-title { font-size: 16px; font-weight: 600; color: #1a1a1e; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

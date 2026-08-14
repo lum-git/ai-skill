@@ -147,7 +147,7 @@ mkdir project/login
 
 ### 3.2 详情/新增/编辑 → 弹窗模式
 
-不再使用 `parent.openTab()` 打开独立详情/表单页面。改为在列表页中嵌入两个 Bootstrap Modal：
+列表页的详情/新增/编辑统一用 Bootstrap Modal 实现：
 - `#[module]DetailModal` — 详情展示，modal-lg
 - `#[module]FormModal` — 新增/编辑表单
 
@@ -167,7 +167,8 @@ mkdir project/login
 ### 3.4 PC 端导航
 
 - **弹窗模式（推荐）**：`new bootstrap.Modal(document.getElementById('detailModal')).show()`
-- **Tab 模式**：`parent.openTab('xxx.html', '标题', 'bi-图标')`
+- **页面跳转（PC 框架内）**：菜单 `<a>` 必须是 `class="sidebar-nav-link"` + `href="xxx.html"` + `target="mainFrame"` + `data-url="xxx.html"` 四件套。点击时由框架脚本同步 `.active` 与 iframe 加载，无需业务页面写任何跳转函数。
+- **面包屑跳转**：PC 内容页用 `<a href="xx.html" target="mainFrame">首页</a>`，浏览器原生 iframe 目标跳转即可。
 - **确认操作**：`parent.confirmModal('标题', '内容', callback)`
 
 ### 3.5 六态
@@ -200,7 +201,8 @@ mkdir project/login
 ### 4.3 App 端导航
 
 - Tab 页用 `location.href = 'xxx.html'`
-- **不用** `parent.openTab()`
+- 子页面用 `<a class="nav-back" href="parent.html">`，浏览器原生跳转即可。
+- 业务页面**不要**自写跨页跳转函数；所有跳转都通过原生 `<a href>` 完成。
 
 ### 4.4 App 端六态
 
@@ -214,13 +216,13 @@ mkdir project/login
 
 ## 五、PC 框架页关键配置
 
-PC 框架页完整模板及 Sidebar 菜单格式、`_knownPages` 映射参见 [examples.md 五 PC 框架页](references/examples.md#五pc-端框架页-pcindexhtml)。
+PC 框架页完整模板及 Sidebar 菜单格式参见 [examples.md 五 PC 框架页](references/examples.md#五pc-端框架页-pcindexhtml)。
 
 **深色侧边栏特点：**
 - 深色背景 `#1F2329`，菜单项圆角 6px
 - 分组间用 `sidebar-divider` 分隔，标题用 `sidebar-section-title`
 - 激活态：左侧 3px 蓝色细线条 + 半透明蓝色背景，文字白色
-- TagsView 隐藏（不使用多标签页），导航通过左侧菜单+iframe
+- 单一 iframe 区域承载所有业务页面，导航通过左侧菜单完成
 
 ---
 
@@ -228,7 +230,7 @@ PC 框架页完整模板及 Sidebar 菜单格式、`_knownPages` 映射参见 [e
 
 1. 确定模块名称和需要的页面
 2. 按模板创建 PC + App 页面文件
-3. 更新 `pc/index.html`：sidebar 菜单项 + `_knownPages` + `map`
+3. 更新 `pc/index.html`：在 sidebar 对应分组下新增菜单 `<a>`（必须是 `class="sidebar-nav-link"` + `href="xxx.html" target="mainFrame"` + `data-url="xxx.html"` 四件套）
 4. 如需要快捷入口，更新 `app/index.html` 的 quick-actions
 5. 更新根 `index.html` 的页面计数
 
@@ -237,6 +239,7 @@ PC 框架页完整模板及 Sidebar 菜单格式、`_knownPages` 映射参见 [e
 ## 七、输出检查清单
 
 生成每个页面前确认：
+- [ ] **根导航入口页 `index.html` 严格保持纯净**：① 禁止出现任何技术栈内容（HTML/CSS/JS、Bootstrap、Vue、React、jQuery、CDN 等技术名词一律不写）；② 禁止描述页面风格/UI 特点（如「深色侧边栏+白色顶栏」「390×844 手机框架」「弹窗模式」「六态」「暗色模式」「分页排序」等样式/交互/布局描述）。
 - [ ] `<html lang="zh-CN">`
 - [ ] `<title>[页面名] — [系统名]</title>`
 - [ ] CSS：CDN bootstrap → CDN icons → design-tokens.css → components.css → [app.css]
@@ -250,7 +253,8 @@ PC 框架页完整模板及 Sidebar 菜单格式、`_knownPages` 映射参见 [e
 - [ ] App Tab 页有 `.phone-tabbar`，非 Tab 页有返回箭头 `.nav-back`
 - [ ] PC 详情/新增/编辑优先用弹窗模式（Bootstrap Modal 嵌入列表页）
 - [ ] PC 操作列：`<button class="btn btn-sm btn-outline-primary"><i class="bi bi-xxx"></i> 文字</button>`，`td class="text-nowrap"`
-- [ ] PC 导航用 `parent.openTab()` / `parent.closeCurrent()` 或弹窗
+- [ ] PC 侧边栏菜单 `<a>` 用 `class="sidebar-nav-link"`，并带 `href="..." target="mainFrame"` + `data-url="..."`
+- [ ] PC 框架内跳转用 `<a href="xxx.html" target="mainFrame">`
 - [ ] App 导航用 `location.href`
 - [ ] 表单页有 `data-dirty` 属性
 - [ ] App 页面有本地 `showToast()` 定义
