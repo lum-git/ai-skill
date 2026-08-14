@@ -12,7 +12,7 @@
 
 ```html
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-skin="default">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -27,7 +27,7 @@
     <!-- ===== 面包屑 ===== -->
     <div class="page-header">
       <ol class="breadcrumb mb-0">
-        <li class="breadcrumb-item"><a href="index-content.html" target="mainFrame" onclick="try{parent.document.querySelectorAll('.sidebar-nav-link').forEach(function(s){s.classList.remove('active');});var m=parent.document.querySelector('.sidebar-nav-link[data-url=&quot;index-content.html&quot;]');if(m)m.classList.add('active');}catch(e){}">首页</a></li>
+        <li class="breadcrumb-item"><a href="index-content.html" onclick="try{event.preventDefault();parent.loadPage('index-content.html');}catch(e){location.href='index-content.html';}">首页</a></li>
         <li class="breadcrumb-item active" aria-current="page">[模块名]</li>
       </ol>
     </div>
@@ -40,6 +40,8 @@
 </body>
 </html>
 ```
+
+> 注：`<html data-skin="default">` 中的 `default` 需根据第 0 步识别结果替换为 `gov` / `party`。**所有 PC 业务页**都不放 FOUC 暗色脚本（PC 端不提供暗色模式）。**面包屑首页链接**用 `parent.loadPage(...)` 跳转而非 `target="mainFrame"`，因 iframe sandbox 不允许跨 frame target 跳转（详见 [第五章 PC 框架页](#五pc-端框架页-pcindexhtml) 的 `loadPage` 函数）。
 
 ### 1.2 列表页（含筛选栏+表格+分页+弹窗+六态）
 
@@ -102,8 +104,10 @@
         <td><span class="badge bg-warning text-dark">待处理</span></td>
         <td class="text-nowrap small">2026-08-10 10:30</td>
         <td class="text-nowrap">
-          <button class="btn btn-sm btn-outline-primary" onclick="showDetail(this)" title="查看"><i class="bi bi-eye"></i> 查看</button>
-          <button class="btn btn-sm btn-outline-secondary" onclick="editItem(this)" title="编辑"><i class="bi bi-pencil"></i> 编辑</button>
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-primary" onclick="showDetail(this)" title="查看"><i class="bi bi-eye"></i> 查看</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="editItem(this)" title="编辑"><i class="bi bi-pencil"></i> 编辑</button>
+          </div>
         </td>
       </tr>
       <!-- 更多数据行（至少 11~20 条） -->
@@ -115,7 +119,7 @@
       <select class="form-select form-select-sm d-inline-block" style="width:auto;min-width:90px;" onchange="changePageSize(this.value)">
         <option value="10" selected>10条/页</option><option value="30">30条/页</option><option value="50">50条/页</option><option value="100">100条/页</option>
       </select>
-      <div>
+      <div class="d-flex gap-2">
         <button class="btn btn-sm btn-outline-secondary page-btn disabled" onclick="goPage(currentPage-1)">上一页</button>
         <button class="btn btn-sm btn-outline-secondary page-btn disabled" onclick="goPage(currentPage+1)">下一页</button>
       </div>
@@ -186,8 +190,8 @@
 ```html
 <div class="page-header">
   <ol class="breadcrumb mb-0">
-    <li class="breadcrumb-item"><a href="index-content.html" target="mainFrame">首页</a></li>
-    <li class="breadcrumb-item"><a href="[list].html" target="mainFrame">[列表]</a></li>
+    <li class="breadcrumb-item"><a href="index-content.html" onclick="try{event.preventDefault();parent.loadPage('index-content.html');}catch(e){location.href='index-content.html';}">首页</a></li>
+    <li class="breadcrumb-item"><a href="[list].html" onclick="try{event.preventDefault();parent.loadPage('[list].html');}catch(e){location.href='[list].html';}">[列表]</a></li>
     <li class="breadcrumb-item active">[详情]</li>
   </ol>
 </div>
@@ -267,14 +271,12 @@
 
 ```html
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-skin="default">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>[页面名] — [系统名称]</title>
-  <script>
-    (function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.setAttribute('data-theme','dark');})();
-  </script>
+  <script>(function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.setAttribute('data-theme','dark');})();</script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css">
   <link rel="stylesheet" href="../shared/design-tokens.css">
@@ -321,7 +323,7 @@
 
 ```html
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-skin="default">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -424,20 +426,21 @@
 
 ```html
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-skin="default">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>登录 — [系统名称]</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css">
   <link rel="stylesheet" href="../shared/design-tokens.css">
+  <link rel="stylesheet" href="../shared/components.css">
   <style>
     body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--primary-dark),var(--primary));}
     .login-card{width:100%;max-width:400px;background:#fff;border-radius:12px;padding:2.5rem 2rem;box-shadow:var(--shadow-lg);}
     .login-card .logo{text-align:center;margin-bottom:1.5rem;}
     .login-card .logo i{font-size:2.5rem;color:var(--primary);}
     .login-card .logo h4{margin-top:0.5rem;font-weight:700;}
-    .login-card .logo p{color:var(--gray-500);font-size:0.85rem;}
+    .login-card .logo p{color:var(--text-tertiary);font-size:0.85rem;}
   </style>
 </head>
 <body>
@@ -455,25 +458,28 @@
 </html>
 ```
 
+> 注：`<html data-skin="default">` 中的 `default` 需根据第 0 步识别结果替换为 `gov` / `party`。背景渐变 `linear-gradient(135deg, var(--primary-dark), var(--primary))` 会随主题自动变色（政务蓝 / 党旗红）。**登录页不放主题切换按钮、不放暗色 FOUC 脚本**——主题由项目级 `data-skin` 决定，无需业务用户切换；暗色模式仅 App 端。
+
 ---
 
 ## 四、根导航入口页 `index.html`
 
 ```html
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-skin="default">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>[系统名称] — 原型导航</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="shared/design-tokens.css">
+  <link rel="stylesheet" href="shared/components.css">
   <style>
-    body{background:var(--gray-50);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
-    :root{--primary:#1e40af;--primary-dark:#1e3a8a;--gray-50:#f8f9fa;--gray-500:#64748b;--shadow-md:0 4px 12px rgba(0,0,0,0.12);}
+    body{background:var(--bg-body);font-family:var(--font-family);}
     .container{max-width:800px;}
     .header{background:linear-gradient(135deg,var(--primary-dark),var(--primary));color:#fff;padding:2.5rem 0;margin-bottom:2rem;}
-    .entry-card{background:#fff;border-radius:10px;padding:1.5rem;box-shadow:var(--shadow-md);transition:transform 0.15s;}
-    .entry-card:hover{transform:translateY(-2px);}.entry-card .icon{font-size:2rem;}
+    .entry-card{background:var(--bg-white);border-radius:10px;padding:1.5rem;box-shadow:var(--shadow-sm);transition:transform 0.15s; border:1px solid var(--border-light);}
+    .entry-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);} .entry-card .icon{font-size:2rem;}
   </style>
 </head>
 <body>
@@ -483,11 +489,16 @@
     <div class="col-md-6"><a href="pc/index.html" class="text-decoration-none"><div class="entry-card"><div class="d-flex align-items-center gap-3 mb-2"><i class="bi bi-display icon text-primary"></i><div><h5 class="mb-0">PC 管理端</h5><small class="text-muted">全功能 · X 页</small></div></div></div></a></div>
     <div class="col-md-6"><a href="app/index.html" class="text-decoration-none"><div class="entry-card"><div class="d-flex align-items-center gap-3 mb-2"><i class="bi bi-phone icon text-success"></i><div><h5 class="mb-0">App 端</h5><small class="text-muted">移动端 · Y 页</small></div></div></div></a></div>
     <div class="col-md-6"><a href="login/index.html" class="text-decoration-none"><div class="entry-card"><div class="d-flex align-items-center gap-3 mb-2"><i class="bi bi-box-arrow-in-right icon text-danger"></i><div><h5 class="mb-0">登录页</h5><small class="text-muted">用户认证</small></div></div></div></a></div>
+    <div class="col-md-6"><a href="styleguide.html" class="text-decoration-none"><div class="entry-card"><div class="d-flex align-items-center gap-3 mb-2"><i class="bi bi-palette icon" style="color:var(--primary);"></i><div><h5 class="mb-0">风格总览</h5><small class="text-muted">查看当前项目主题效果</small></div></div></div></a></div>
   </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script src="shared/components.js"></script>
 </body>
 </html>
 ```
+
+> 注：根导航入口页**必须**引用 `shared/design-tokens.css` + `shared/components.css`，使整页（含顶部 header 渐变、卡片背景）统一呈现项目主题。第 4 张卡片"风格总览"指向项目内的 `styleguide.html`（从零生成时自动创建），仅用于查看当前主题效果，**不放主题切换按钮**。
 
 ---
 
@@ -495,11 +506,10 @@
 
 ```html
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-skin="default">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>[系统名称] — 管理后台</title>
-  <script>(function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.setAttribute('data-theme','dark');})();</script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css">
   <link rel="stylesheet" href="../shared/design-tokens.css">
@@ -513,7 +523,7 @@
   </div>
   <div class="header-right">
     <span class="env-badge non-secret">正式版</span>
-    <span class="header-notification" onclick="document.getElementById('mainFrame').src='messages.html';document.querySelectorAll('.sidebar-nav-link').forEach(function(s){s.classList.remove('active');});var m=document.querySelector('.sidebar-nav-link[data-url=&quot;messages.html&quot;]');if(m)m.classList.add('active');"><i class="bi bi-bell"></i><span class="badge rounded-pill bg-danger badge-notify">3</span></span>
+    <span class="header-notification" onclick="loadPage('messages.html')"><i class="bi bi-bell"></i><span class="badge rounded-pill bg-danger badge-notify">3</span></span>
     <div class="header-user dropdown">
       <div class="d-flex align-items-center gap-2" data-bs-toggle="dropdown"><div class="user-avatar">管</div><span class="user-name">管理员 <i class="bi bi-chevron-down" style="font-size:0.7rem;"></i></span></div>
       <ul class="dropdown-menu dropdown-menu-end">
@@ -531,28 +541,42 @@
   </div>
 </div>
 <div id="sidebarBackdrop" class="sidebar-backdrop" onclick="closeSidebar()"></div>
-<button onclick="toggleTheme()" class="btn btn-sm btn-outline-secondary rounded-circle" style="position:fixed;bottom:1rem;right:1rem;width:36px;height:36px;z-index:1050;"><i class="bi bi-moon-stars"></i></button>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../shared/components.js"></script>
 <script>
-  // PC 框架菜单跳转：原生 <a target="mainFrame"> + 同步 .active + 显示 loading
+  // 全局加载函数：被侧边栏菜单 / 顶栏通知 / iframe 内部面包屑调用
+  // 解决 target="mainFrame" 在 iframe sandbox 下失效的问题
+  window.loadPage = function(url) {
+    document.querySelectorAll('.sidebar-nav-link').forEach(function(s){s.classList.remove('active');});
+    var m = document.querySelector('.sidebar-nav-link[data-url="'+url+'"]');
+    if (m) m.classList.add('active');
+    var frame = document.getElementById('mainFrame');
+    var overlay = document.getElementById('iframeLoading');
+    if (frame && url) { if (overlay) overlay.style.display = 'flex'; frame.src = url; }
+  };
+  // 侧边栏菜单点击：调用 loadPage
   document.querySelectorAll('.sidebar-nav-link[data-url]').forEach(function(item){
     item.addEventListener('click', function(e){
       e.preventDefault();
-      document.querySelectorAll('.sidebar-nav-link').forEach(function(s){s.classList.remove('active');});
-      this.classList.add('active');
-      var url = this.getAttribute('data-url');
-      var frame = document.getElementById('mainFrame');
-      var overlay = document.getElementById('iframeLoading');
-      if (frame && url) { if (overlay) overlay.style.display = 'flex'; frame.src = url; }
+      loadPage(this.getAttribute('data-url'));
     });
   });
-  // iframe 加载完关闭 loading
+  // iframe 加载完：关闭 loading + 按 URL 恢复 sidebar active 状态
+  // 解决刷新页面后 active 丢失 / iframe 内跳走后 active 不同步的问题
   var _mainFrame = document.getElementById('mainFrame');
-  if (_mainFrame) _mainFrame.addEventListener('load', function(){ var o=document.getElementById('iframeLoading'); if(o) o.style.display='none'; });
+  if (_mainFrame) _mainFrame.addEventListener('load', function(){
+    var o = document.getElementById('iframeLoading'); if (o) o.style.display = 'none';
+    try {
+      var url = this.contentWindow.location.pathname.split('/').pop();
+      if (url) {
+        document.querySelectorAll('.sidebar-nav-link').forEach(function(s){s.classList.remove('active');});
+        var m = document.querySelector('.sidebar-nav-link[data-url="'+url+'"]');
+        if (m) m.classList.add('active');
+      }
+    } catch(e) { /* 跨域时静默忽略 */ }
+  });
   // 侧边栏折叠状态持久化
   if (localStorage.getItem('sidebar-collapsed')==='1') document.body.classList.add('sidebar-collapsed');
-  // 菜单跳转通过原生 <a target="mainFrame">，框架不提供额外跳转 API
 </script>
 </body>
 </html>
@@ -560,14 +584,19 @@
 
 **Sidebar 菜单项格式：**
 ```html
-<a class="sidebar-nav-link active" data-url="index-content.html" href="index-content.html" target="mainFrame"><i class="bi bi-speedometer2"></i> <span>工作台</span></a>
+<a class="sidebar-nav-link active" data-url="index-content.html" href="index-content.html"><i class="bi bi-speedometer2"></i> <span>工作台</span></a>
 <div class="sidebar-divider"></div>
 <div class="sidebar-section-title">系统管理</div>
-<a class="sidebar-nav-link" data-url="[file].html" href="[file].html" target="mainFrame"><i class="bi bi-[icon]"></i> <span>[名称]</span></a>
+<a class="sidebar-nav-link" data-url="[file].html" href="[file].html"><i class="bi bi-[icon]"></i> <span>[名称]</span></a>
 <!-- 折叠分组 -->
 <a class="sidebar-nav-link" data-bs-toggle="collapse" data-bs-target="#navGroup1" aria-expanded="false" href="#navGroup1" role="button"><i class="bi bi-[icon]"></i> <span>[分组名]</span></a>
-<div class="collapse" id="navGroup1"><a class="sidebar-nav-link" data-url="[file].html" href="[file].html" target="mainFrame"><i class="bi bi-[icon]"></i> <span>[名称]</span></a></div>
+<div class="collapse" id="navGroup1"><a class="sidebar-nav-link" data-url="[file].html" href="[file].html"><i class="bi bi-[icon]"></i> <span>[名称]</span></a></div>
 ```
+
+> **关键约束**：
+> 1. **跳转方式**：业务页用 `parent.loadPage('xxx.html')` 跳转，不要再用 `target="mainFrame"`（iframe sandbox 下失效）。
+> 2. **active 持久化**：PC 框架页通过 iframe `load` 事件读取 `contentWindow.location.pathname` 自动同步 sidebar `.active` 类，刷新或跳转后菜单高亮不会丢。
+> 3. **不放暗色切换按钮、不放 FOUC 暗色脚本**：PC 端不提供暗色模式（暗色仅 App 端）。**不放主题切换按钮**——项目主题由 `<html data-skin="...">` 在生成时一次性确定，业务用户无需切换。
 
 ---
 
@@ -598,26 +627,74 @@ initPagination(10);
 
 CSS：始终用 `var(--primary)`、`var(--gray-200)` 等变量，不硬编码色值。
 
+相邻按钮：多个按钮并排时用 `d-flex gap-2` 容器（或给非首个按钮加 `ms-2`）保持间距，禁止贴在一起。
+
 ---
 
 ## 附录 A：shared/design-tokens.css
 
+以下为完整的 CSS 变量设计令牌文件，**包含三套主题（默认/政企/党建）+ 暗色模式**，运行时通过 `<html data-skin="..." data-theme="dark">` 切换。生成项目时直接写入 `shared/design-tokens.css`：
+
+主题规范、自动识别规则、切换 API 详见 [themes.md](themes.md)。
+
 ```css
-:root {
+/* ============================================================
+   设计令牌（design tokens）— 三主题 + 暗色
+   ============================================================ */
+
+/* ---- 默认风格 ---- */
+:root,
+:root[data-skin="default"] {
   --primary:#3370FF;--primary-hover:#2860E1;--primary-active:#1F4DC4;--primary-light:#E1EBFF;--primary-bg:#F0F5FF;
   --success:#00B578;--success-light:#E8F9F2;--warning:#FF7D00;--warning-light:#FFF3E8;--danger:#F53F3F;--danger-light:#FFEDED;
   --text-primary:#1F2329;--text-secondary:#646A73;--text-tertiary:#8F959E;--text-disabled:#BEC2C7;
   --bg-body:#F5F6F7;--bg-white:#FFFFFF;--bg-card:#FFFFFF;--bg-hover:#F2F3F5;--bg-active:#E8EAED;--bg-mask:rgba(0,0,0,0.4);
   --border-default:#E5E6EB;--border-light:#F0F1F4;--border-heavy:#C9CDD4;
   --sidebar-bg:#1F2329;--sidebar-hover:#2B2F36;--sidebar-text:#8B8F97;--sidebar-text-hover:#C9CDD4;--sidebar-text-active:#FFFFFF;--sidebar-section-title:#5E6269;--sidebar-divider:rgba(255,255,255,0.06);
-  --header-bg:#FFFFFF;--header-border:#E5E6EB;--header-height:56px;
+  --header-bg:#FFFFFF;--header-text:#1F2329;--header-border:#E5E6EB;--header-height:56px;
   --shadow-xs:0 1px 2px rgba(0,0,0,0.04);--shadow-sm:0 1px 3px rgba(0,0,0,0.06);--shadow-md:0 4px 12px rgba(0,0,0,0.08);--shadow-lg:0 8px 24px rgba(0,0,0,0.12);--shadow-card:0 1px 4px rgba(0,0,0,0.04);
   --radius-xs:4px;--radius-sm:6px;--radius-md:8px;--radius-lg:12px;--radius-xl:16px;--radius-full:9999px;
   --space-xs:4px;--space-sm:8px;--space-md:12px;--space-lg:16px;--space-xl:20px;--space-2xl:24px;--space-3xl:32px;
   --font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
   --font-size-base:13px;--font-size-md:14px;--font-size-lg:16px;--font-size-xl:18px;--font-size-2xl:20px;--font-size-3xl:24px;
   --sidebar-width:220px;--sidebar-collapsed-width:64px;
+  --accent-gold:transparent;
 }
+
+/* ---- 政企风格 ---- */
+:root[data-skin="gov"] {
+  --primary:#1E3A8A;--primary-hover:#1E40AF;--primary-active:#172554;--primary-light:#DBE5FE;--primary-bg:#EFF4FE;
+  --success:#15803D;--success-light:#DCFCE7;--warning:#B45309;--warning-light:#FEF3C7;--danger:#991B1B;--danger-light:#FEE2E2;
+  --text-primary:#0F1E3D;--text-secondary:#475569;--text-tertiary:#64748B;--text-disabled:#94A3B8;
+  --bg-body:#F4F1EA;--bg-white:#FFFFFF;--bg-card:#FFFFFF;--bg-hover:#ECEAE3;--bg-active:#E5E1D6;--bg-mask:rgba(15,30,61,0.5);
+  --border-default:#D6D2C5;--border-light:#E8E4D7;--border-heavy:#A8A293;
+  --sidebar-bg:#0F1E3D;--sidebar-hover:#1A2A4D;--sidebar-text:#94A3B8;--sidebar-text-hover:#CBD5E1;--sidebar-text-active:#FFFFFF;--sidebar-section-title:#64748B;--sidebar-divider:rgba(255,255,255,0.08);
+  --header-bg:#FFFFFF;--header-text:#0F1E3D;--header-border:#D6D2C5;
+  --accent-gold:#B8860B;
+}
+
+/* ---- 党建风格 ---- */
+:root[data-skin="party"] {
+  --primary:#C9302C;--primary-hover:#A82420;--primary-active:#8B1A1A;--primary-light:#FCE4E3;--primary-bg:#FEF1F0;
+  --success:#15803D;--success-light:#DCFCE7;--warning:#B45309;--warning-light:#FEF3C7;--danger:#991B1B;--danger-light:#FEE2E2;
+  --text-primary:#1F1112;--text-secondary:#5C2024;--text-tertiary:#8B5A5F;--text-disabled:#B89A9E;
+  --bg-body:#FDF6E3;--bg-white:#FFFFFF;--bg-card:#FFFFFF;--bg-hover:#F5EBD0;--bg-active:#EFE0BD;--bg-mask:rgba(127,29,29,0.5);
+  --border-default:#E8D9B0;--border-light:#F0E5C5;--border-heavy:#B89A60;
+  --sidebar-bg:#7F1D1D;--sidebar-hover:#991B1B;--sidebar-text:rgba(255,255,255,0.7);--sidebar-text-hover:rgba(255,255,255,0.9);--sidebar-text-active:#FFFFFF;--sidebar-section-title:rgba(255,255,255,0.5);--sidebar-divider:rgba(255,255,255,0.1);
+  --header-bg:#C9302C;--header-text:#FFFFFF;--header-border:#A82420;
+  --accent-gold:#F59E0B;
+}
+
+/* ---- 暗色模式（与主题正交叠加） ---- */
+[data-theme="dark"] {
+  --bg-body:#1A1A1A;--bg-white:#262626;--bg-card:#262626;--bg-hover:#333333;--bg-active:#3D3D3D;
+  --text-primary:#E5E5E5;--text-secondary:#999999;--text-tertiary:#707070;--text-disabled:#555555;
+  --border-default:#3D3D3D;--border-light:#333333;--border-heavy:#555555;
+  --header-bg:#262626;--header-text:#E5E5E5;--header-border:#333333;
+  --shadow-xs:0 1px 2px rgba(0,0,0,0.2);--shadow-sm:0 1px 3px rgba(0,0,0,0.3);--shadow-md:0 4px 12px rgba(0,0,0,0.4);--shadow-lg:0 8px 24px rgba(0,0,0,0.5);--shadow-card:0 1px 4px rgba(0,0,0,0.2);
+}
+[data-theme="dark"][data-skin="gov"]   { --sidebar-bg:#0A1428;--sidebar-text:#64748B; }
+[data-theme="dark"][data-skin="party"] { --sidebar-bg:#450A0A; }
 ```
 
 ## 附录 B：shared/components.css
@@ -776,7 +853,7 @@ th.sortable::after { content: ' ↕'; font-size: 10px; color: var(--text-disable
 .form-control-sm, .form-select-sm { font-size: var(--font-size-sm); padding: 4px 10px; border-radius: var(--radius-xs); }
 
 /* ---- Badge ---- */
-.badge { font-weight: 500; font-size: var(--font-size-xs); padding: 3px 8px; border-radius: var(--radius-xs); }
+.badge { font-weight: 500; font-size: var(--font-size-xs); padding: 6px 8px; border-radius: var(--radius-xs); }
 .bg-primary { background: var(--primary) !important; }
 .bg-success { background: var(--success) !important; }
 .bg-danger { background: var(--danger) !important; }
@@ -845,13 +922,18 @@ th.sortable::after { content: ' ↕'; font-size: 10px; color: var(--text-disable
 
 以下为完整的共享工具库，生成项目时直接写入 `shared/components.js`：
 
-本工具库只提供"页面内"工具函数（Toast/弹窗/分页/排序/筛选/主题/侧边栏）。PC 端菜单跳转通过原生 `<a href="xxx.html" target="mainFrame">` 完成，业务页面无需自写跳转逻辑。
+本工具库提供"页面内"工具函数（Toast/弹窗/分页/排序/筛选/暗色/侧边栏）。PC 端菜单跳转通过父页面的 `loadPage(url)` 全局函数完成（见 [第五章 PC 框架页](#五pc-端框架页-pcindexhtml)），业务页面通过 `parent.loadPage('xxx.html')` 触发跳转。**不要再用** `target="mainFrame"`（iframe sandbox 下失效）。
+
+**暗色模式 API（仅 App 端使用）**：
+- `toggleTheme()`：切换暗色模式，与主题 `data-skin` 正交叠加、互不冲突；仅在 App 端页面调用，PC 端不调用、不放暗色切换按钮。
+- 主题本身由 `<html data-skin="...">` 静态决定，**不提供 `cycleSkin` / `setSkin` / `getSkin` 等运行时切换 API**。
 
 ```javascript
 /* ============================================================
    共享工具库 — 原型项目
-   提供：状态切换/Toast/确认弹窗/分页/排序/筛选/主题/侧边栏
-   说明：菜单跳转通过原生 <a target="mainFrame"> 完成
+   提供：状态切换/Toast/确认弹窗/分页/排序/筛选/暗色/侧边栏
+   说明：菜单跳转通过父页面的 loadPage(url) 全局函数完成
+         （PC 框架页定义在 pc/index.html，业务页用 parent.loadPage 调用）
    ============================================================ */
 
 function showToast(msg, type) {

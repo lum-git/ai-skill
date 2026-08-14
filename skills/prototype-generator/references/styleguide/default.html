@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-skin="default">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>通用业务系统样式模板 — 默认风格</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css">
+  <style>
+/* === 内联 design-tokens.css === */
+:root,:root[data-skin="default"]{--primary:#3370FF;--primary-hover:#2860E1;--primary-active:#1F4DC4;--primary-light:#E1EBFF;--primary-bg:#F0F5FF;--success:#00B578;--success-light:#E8F9F2;--warning:#FF7D00;--warning-light:#FFF3E8;--danger:#F53F3F;--danger-light:#FFEDED;--text-primary:#1F2329;--text-secondary:#646A73;--text-tertiary:#8F959E;--text-disabled:#BEC2C7;--text-link:#3370FF;--bg-body:#F5F6F7;--bg-white:#FFFFFF;--bg-card:#FFFFFF;--bg-hover:#F2F3F5;--bg-active:#E8EAED;--bg-mask:rgba(0,0,0,0.4);--border-default:#E5E6EB;--border-light:#F0F1F4;--border-heavy:#C9CDD4;--sidebar-bg:#1F2329;--sidebar-hover:#2B2F36;--sidebar-text:#8B8F97;--sidebar-text-hover:#C9CDD4;--sidebar-text-active:#FFFFFF;--sidebar-section-title:#5E6269;--sidebar-divider:rgba(255,255,255,0.06);--header-bg:#FFFFFF;--header-text:#1F2329;--header-border:#E5E6EB;--header-height:56px;--shadow-xs:0 1px 2px rgba(0,0,0,0.04);--shadow-sm:0 1px 3px rgba(0,0,0,0.06);--shadow-md:0 4px 12px rgba(0,0,0,0.08);--shadow-lg:0 8px 24px rgba(0,0,0,0.12);--shadow-card:0 1px 4px rgba(0,0,0,0.04);--radius-xs:4px;--radius-sm:6px;--radius-md:8px;--radius-lg:12px;--radius-xl:16px;--radius-full:9999px;--space-xs:4px;--space-sm:8px;--space-md:12px;--space-lg:16px;--space-xl:20px;--space-2xl:24px;--space-3xl:32px;--font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;--sidebar-width:220px;--sidebar-collapsed-width:64px;--font-size-xs:12px;--font-size-sm:13px;--font-size-base:14px;--font-size-md:14px;--font-size-lg:18px;--accent-gold:transparent;}
+:root[data-skin="gov"]{--primary:#1E3A8A;--primary-hover:#1E40AF;--primary-active:#172554;--primary-light:#DBE5FE;--primary-bg:#EFF4FE;--bg-body:#F4F1EA;--text-primary:#0F1E3D;--sidebar-bg:#0F1E3D;--header-text:#0F1E3D;--header-border:#D6D2C5;--border-default:#D6D2C5;--accent-gold:#B8860B;}
+:root[data-skin="party"]{--primary:#C9302C;--primary-hover:#A82420;--primary-active:#8B1A1A;--primary-light:#FCE4E3;--primary-bg:#FEF1F0;--bg-body:#FDF6E3;--text-primary:#1F1112;--text-secondary:#5C2024;--sidebar-bg:#7F1D1D;--header-bg:#C9302C;--header-text:#FFFFFF;--header-border:#A82420;--border-default:#E8D9B0;--accent-gold:#F59E0B;}
+[data-theme="dark"]{--bg-body:#1A1A1A;--bg-white:#262626;--bg-card:#262626;--bg-hover:#333333;--bg-active:#3D3D3D;--text-primary:#E5E5E5;--text-secondary:#999999;--text-tertiary:#707070;--text-disabled:#555555;--border-default:#3D3D3D;--border-light:#333333;--border-heavy:#555555;--header-bg:#262626;--header-text:#E5E5E5;--header-border:#333333;}
+[data-theme="dark"][data-skin="gov"]{--sidebar-bg:#0A1428;}
+[data-theme="dark"][data-skin="party"]{--sidebar-bg:#450A0A;}
+
+/* === 平滑过渡 === */
+body,.entry-card,.color-card,.module-card,.btn,.form-control,.form-select,.table,.badge{transition:background-color .25s ease,color .25s ease,border-color .25s ease;}
+
+/* === 政企顶栏金线 === */
+[data-skin="gov"] .sg-header{border-bottom:2px solid var(--accent-gold);}
+
+/* === 移动端不应用米黄/档案米 === */
+@media (max-width:768px){[data-skin="party"] body,[data-skin="gov"] body{background:var(--bg-white);}}
+
+/* === 风格总览专用布局 === */
+body{background:var(--bg-body);font-family:var(--font-family);}
+.sg-header{background:linear-gradient(135deg,var(--primary-active),var(--primary));color:#fff;padding:2.5rem 2rem 3.5rem;position:relative;overflow:hidden;}
+.sg-header h1{font-size:2.2rem;font-weight:700;margin:0 0 .5rem;}
+.sg-header .lead{font-size:1rem;opacity:.92;max-width:680px;margin:0;}
+.sg-header .emblem{position:absolute;top:1.5rem;right:1.5rem;width:72px;height:72px;border:2px solid rgba(255,255,255,.4);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;opacity:.7;}
+.sg-section{background:var(--bg-white);margin:-1.5rem 1.5rem 1.5rem;border-radius:8px;padding:1.5rem 1.75rem;box-shadow:var(--shadow-md);position:relative;}
+.sg-section-num{position:absolute;top:-12px;left:1.5rem;background:var(--primary);color:#fff;font-size:.7rem;padding:3px 10px;border-radius:10px;font-weight:600;letter-spacing:1px;}
+.sg-section h2{font-size:1.25rem;font-weight:700;margin:0 0 .25rem;color:var(--text-primary);}
+.sg-section h2 .bi{color:var(--primary);margin-right:6px;}
+.sg-section .subtitle{font-size:.82rem;color:var(--text-secondary);margin-bottom:1.25rem;}
+.color-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+.color-card{border:1px solid var(--border-default);border-radius:6px;overflow:hidden;}
+.color-swatch{height:64px;display:flex;align-items:flex-end;padding:6px 10px;font-size:.65rem;font-weight:600;letter-spacing:.5px;}
+.color-info{padding:6px 10px;background:var(--bg-white);}
+.color-info .name{font-weight:600;font-size:.78rem;color:var(--text-primary);}
+.color-info .hex{font-size:.68rem;color:var(--text-tertiary);font-family:'SFMono-Regular',Consolas,monospace;}
+.module-card{background:var(--bg-white);border:1px solid var(--border-default);border-top:3px solid var(--primary);border-radius:6px;padding:1.1rem;height:100%;transition:all .15s;}
+.module-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
+.module-card .icon-wrap{width:40px;height:40px;border-radius:8px;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:.6rem;}
+.module-card h3{font-size:1rem;font-weight:700;margin:0 0 .3rem;color:var(--text-primary);}
+.module-card .desc{font-size:.78rem;color:var(--text-secondary);line-height:1.55;margin-bottom:.6rem;}
+.module-card .feature-list{list-style:none;padding:0;margin:0;font-size:.72rem;}
+.module-card .feature-list li{padding:2px 0;color:var(--text-secondary);}
+.module-card .feature-list i{color:var(--primary);margin-right:3px;}
+.demo-table{font-size:.82rem;}
+.demo-table th{background:var(--primary-bg);color:var(--text-primary);font-weight:600;border-bottom:2px solid var(--primary-light);white-space:nowrap;}
+.demo-table .badge{font-weight:500;}
+.typo-row{border-bottom:1px dashed var(--border-light);padding:.6rem 0;display:flex;align-items:baseline;gap:1rem;}
+.typo-row:last-child{border-bottom:none;}
+.typo-label{width:90px;flex-shrink:0;color:var(--text-secondary);font-size:.72rem;font-family:'SFMono-Regular',Consolas,monospace;}
+.typo-h1{font-size:1.8rem;font-weight:700;color:var(--text-primary);line-height:1.2;}
+.typo-h2{font-size:1.4rem;font-weight:700;color:var(--text-primary);}
+.typo-h3{font-size:1.15rem;font-weight:600;color:var(--text-primary);}
+.typo-h4{font-size:1rem;font-weight:600;color:var(--text-primary);}
+.typo-body{font-size:.9rem;color:var(--text-primary);}
+.typo-small{font-size:.78rem;color:var(--text-secondary);}
+.stat-mini{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:.5rem;}
+.stat-mini-card{background:var(--bg-white);border:1px solid var(--border-default);border-radius:6px;padding:.85rem;}
+.stat-mini-card .label{font-size:.7rem;color:var(--text-secondary);margin-bottom:4px;}
+.stat-mini-card .value{font-size:1.4rem;font-weight:700;color:var(--primary);line-height:1.2;}
+.stat-mini-card .value .unit{font-size:.7rem;color:var(--text-tertiary);margin-left:2px;font-weight:400;}
+.stat-mini-card .trend{font-size:.68rem;margin-top:3px;}
+.stat-mini-card .trend.up{color:var(--success);}
+.stat-mini-card .trend.down{color:var(--danger);}
+.btn-sample{margin-right:6px;margin-bottom:6px;}
+td .btn + .btn{margin-left:var(--space-sm);}
+
+/* === 真实框架布局演示（使用真实的 .header-navbar / .sidebar / .main-layout 类） === */
+.frame-preview{position:relative;overflow:hidden;border:1px solid var(--border-default);border-radius:8px;background:var(--bg-body);box-shadow:var(--shadow-md);isolation:isolate;}
+
+/* === App 端真实组件样式（内联自 app/assets/app.css） === */
+.phone-preview{display:flex;align-items:flex-start;justify-content:center;padding:24px;background:#e8eaed;border-radius:8px;min-height:880px;}
+.phone-frame{width:390px;height:844px;background:var(--bg-white);border-radius:44px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.25),0 10px 20px rgba(0,0,0,.1);display:flex;flex-direction:column;flex-shrink:0;position:relative;}
+.phone-status-bar{padding:12px 28px 6px;display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600;color:var(--text-primary);letter-spacing:.3px;flex-shrink:0;}
+.phone-status-bar .time{font-weight:700;}
+.phone-status-bar .status-icons{display:flex;gap:6px;align-items:center;font-size:14px;color:var(--text-primary);}
+.phone-nav-header{padding:6px 20px 12px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;border-bottom:1px solid rgba(0,0,0,.04);}
+.phone-nav-header .nav-left{display:flex;align-items:center;gap:8px;}
+.phone-nav-header .nav-back{font-size:20px;color:var(--text-primary);cursor:pointer;text-decoration:none;display:flex;align-items:center;}
+.phone-nav-header .nav-title{font-size:22px;font-weight:700;color:var(--text-primary);letter-spacing:-.5px;margin:0;}
+.phone-nav-header .nav-actions{display:flex;gap:18px;color:var(--text-secondary);font-size:20px;align-items:center;}
+.phone-nav-header .nav-actions i{color:var(--text-secondary);cursor:pointer;}
+.phone-content{flex:1;overflow-y:auto;padding:12px 16px 8px;scroll-behavior: smooth;}
+.phone-content::-webkit-scrollbar{width:0;background:transparent;}
+.phone-tabbar{border-top:1px solid rgba(0,0,0,.05);display:flex;justify-content:space-around;padding:8px 0 10px;flex-shrink:0;background:transparent;}
+.phone-tabbar .tab-item{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;font-weight:500;color:#8e8e93;cursor:pointer;text-decoration:none;padding:4px 12px;border-radius:8px;position:relative;min-width:52px;background:transparent;border:none;font-family:inherit;}
+.phone-tabbar .tab-item i{font-size:22px;}
+.phone-tabbar .tab-item.active{color:var(--primary);}
+.phone-tabbar .tab-item.active i{font-weight:900;}
+.phone-tabbar .badge-dot{position:absolute;top:2px;right:0;background:var(--danger);color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 5px;border:2px solid var(--bg-white);}
+.section-header{font-size:13px;font-weight:600;color:#8e8e93;letter-spacing:.3px;padding:8px 0 6px;}
+.task-card{background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:2px;cursor:pointer;border:none;}
+.task-card:active{background:#eef0f4;}
+.task-card .task-title{font-size:16px;font-weight:600;color:#1a1a1e;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.task-card .task-table{font-size:14px;color:#6c6c70;}
+.task-card .task-meta{margin-top:6px;font-size:12px;color:#8e8e93;}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.stat-grid .stat-card{background:#fff;border-radius:10px;padding:14px;text-align:center;border:none;}
+.stat-grid .stat-card .stat-num{font-size:22px;font-weight:700;color:#1a1a1e;}
+.stat-grid .stat-card .stat-label{font-size:12px;color:#8e8e93;margin-top:4px;}
+.stat-grid .stat-card.warning .stat-num{color:var(--warning);}
+.stat-grid .stat-card.success .stat-num{color:var(--success);}
+.stat-grid .stat-card.danger .stat-num{color:var(--danger);}
+.quick-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.quick-action-item{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;background:#fff;border-radius:10px;border:none;cursor:pointer;font-size:12px;font-weight:500;color:#1a1a1e;}
+.quick-action-item:active{transform:scale(.95);background:#eef0f4;}
+.quick-action-item i{font-size:1.4rem;color:var(--primary);}
+.user-card{display:flex;align-items:center;gap:12px;background:#fff;border-radius:12px;padding:14px 16px;border:none;}
+.user-card .avatar{width:44px;height:44px;border-radius:12px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;flex-shrink:0;}
+.user-card .user-name{font-size:16px;font-weight:600;color:#1a1a1e;}
+.user-card .user-unit{font-size:13px;color:#8e8e93;}
+.user-card .role-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;background:var(--primary-bg);color:var(--primary);}
+.menu-list{background:#fff;border-radius:10px;overflow:hidden;border:none;}
+.menu-item{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid rgba(0,0,0,.04);cursor:pointer;font-size:15px;color:#1a1a1e;text-decoration:none;}
+.menu-item:last-child{border-bottom:none;}
+.menu-item:active{background:#eef0f4;}
+.menu-item i{color:#8e8e93;}
+.menu-item i.bi-chevron-right{font-size:14px;color:#c7c7cc;}
+
+/* === 真实组件样式（内联自 shared/components.css） === */
+.header-navbar{position:fixed;top:0;left:0;right:0;z-index:1030;height:var(--header-height);background:var(--header-bg);border-bottom:1px solid var(--header-border);display:flex;align-items:center;justify-content:space-between;padding:0 var(--space-lg);box-shadow:var(--shadow-xs);color:var(--header-text);transition:background-color .25s ease,color .25s ease,border-color .25s ease;}
+.header-navbar .header-logo{font-size:var(--font-size-lg);font-weight:600;color:var(--text-primary);display:flex;align-items:center;gap:var(--space-sm);white-space:nowrap;}
+.header-navbar .header-logo i{font-size:1.3rem;color:var(--primary);transition:color .25s ease;}
+.header-navbar .header-right{display:flex;align-items:center;gap:var(--space-md);}
+.header-navbar .env-badge{font-size:var(--font-size-xs);padding:2px 8px;border-radius:var(--radius-full);background:var(--success-light);color:var(--success);font-weight:500;}
+.header-navbar .header-notification{color:var(--text-secondary);cursor:pointer;font-size:1.15rem;position:relative;padding:6px;border-radius:var(--radius-sm);}
+.header-navbar .header-notification:hover{background:var(--bg-hover);color:var(--text-primary);}
+.header-navbar .header-notification .badge-notify{position:absolute;top:2px;right:2px;min-width:16px;height:16px;font-size:10px;font-weight:600;border-radius:var(--radius-full);background:var(--danger);color:#fff;text-align:center;padding:0 4px;line-height:16px;}
+.header-navbar .header-user{display:flex;align-items:center;gap:var(--space-sm);cursor:pointer;color:var(--text-primary);padding:4px 8px;border-radius:var(--radius-sm);}
+.header-navbar .header-user:hover{background:var(--bg-hover);}
+.header-navbar .header-user .user-avatar{width:30px;height:30px;border-radius:var(--radius-full);background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:var(--font-size-sm);font-weight:600;transition:background-color .25s ease;}
+.header-navbar .header-user .user-name{font-size:var(--font-size-md);font-weight:500;}
+.navbar-toggler-responsive{color:var(--text-secondary);background:none;border:none;font-size:1.2rem;cursor:pointer;padding:4px 8px;border-radius:var(--radius-sm);}
+.navbar-toggler-responsive:hover{background:var(--bg-hover);}
+.main-layout{display:flex;padding-top:var(--header-height);}
+.sidebar{position:fixed;top:var(--header-height);left:0;bottom:0;width:var(--sidebar-width);z-index:1010;background:var(--sidebar-bg);overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;transition:background-color .25s ease;}
+.sidebar .sidebar-section-title{font-size:var(--font-size-xs);font-weight:500;color:var(--sidebar-section-title);padding:var(--space-lg) var(--space-lg) var(--space-sm);text-transform:uppercase;letter-spacing:.05em;}
+.sidebar .sidebar-nav-link{display:flex;align-items:center;gap:10px;padding:8px 12px;margin:1px 8px;color:var(--sidebar-text);text-decoration:none;font-size:var(--font-size-md);font-weight:400;border-radius:var(--radius-sm);transition:all .15s;position:relative;cursor:pointer;border:none;background:none;width:auto;text-align:left;}
+.sidebar .sidebar-nav-link i{font-size:1.1rem;width:20px;text-align:center;flex-shrink:0;color:var(--sidebar-text);}
+.sidebar .sidebar-nav-link:hover{background:var(--sidebar-hover);color:var(--sidebar-text-hover);}
+.sidebar .sidebar-nav-link:hover i{color:var(--sidebar-text-hover);}
+.sidebar .sidebar-nav-link.active{background:rgba(51,112,255,.12);color:var(--sidebar-text-active);font-weight:500;}
+.sidebar .sidebar-nav-link.active i{color:var(--primary);}
+.sidebar .sidebar-nav-link.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:16px;background:var(--primary);border-radius:0 2px 2px 0;transition:background-color .25s ease;}
+.sidebar .sidebar-divider{height:1px;background:var(--sidebar-divider);margin:var(--space-sm) var(--space-lg);}
+.main-content{flex:1;margin-left:var(--sidebar-width);min-width:0;}
+/* === 折叠状态 === */
+.sidebar-collapsed .sidebar{width:var(--sidebar-collapsed-width);}
+.sidebar-collapsed .sidebar .sidebar-nav-link span{display:none;}
+.sidebar-collapsed .sidebar .sidebar-nav-link{justify-content:center;padding:10px 0;margin:2px 8px;}
+.sidebar-collapsed .sidebar .sidebar-section-title{display:none;}
+.sidebar-collapsed .sidebar .sidebar-divider{display:none;}
+.sidebar-collapsed .main-content{margin-left:var(--sidebar-collapsed-width);}
+.frame-preview .header-navbar{position:relative;top:auto;left:auto;right:auto;box-shadow:none;margin-bottom:0;border-radius:0;}
+.frame-preview .main-layout{padding-top:0;min-height:480px;}
+.frame-preview .sidebar{position:relative;top:auto;bottom:auto;height:auto;flex-shrink:0;overflow:visible;}
+.frame-preview .main-content{margin-left:0;flex:1;padding:1.25rem;background:var(--bg-body);min-width:0;}
+.frame-breadcrumb{font-size:.82rem;color:var(--text-tertiary);margin-bottom:1rem;padding-bottom:.75rem;border-bottom:1px solid var(--border-light);}
+.frame-breadcrumb i{color:var(--text-tertiary);margin-right:.25rem;}
+.frame-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1rem;}
+.frame-stat-card{background:var(--bg-white);border:1px solid var(--border-default);border-radius:6px;padding:.85rem;}
+.frame-stat-card .stat-label{font-size:.7rem;color:var(--text-secondary);margin-bottom:4px;}
+.frame-stat-card .stat-value{font-size:1.5rem;font-weight:700;color:var(--primary);line-height:1.2;transition:color .25s ease;}
+.frame-stat-card .stat-trend{font-size:.7rem;margin-top:4px;color:var(--success);}
+.frame-stat-card .stat-trend.down{color:var(--danger);}
+.frame-table-wrap{background:var(--bg-white);border:1px solid var(--border-default);border-radius:6px;overflow:hidden;}
+.frame-table-wrap table{margin:0;font-size:.82rem;}
+.frame-table-wrap th{background:var(--primary-bg);color:var(--text-primary);font-weight:600;border-bottom:2px solid var(--primary-light);white-space:nowrap;font-size:.78rem;padding:.5rem .75rem;transition:background-color .25s ease,border-color .25s ease;}
+.frame-table-wrap td{padding:.55rem .75rem;border-color:var(--border-light);}
+@media (max-width:768px){.color-grid{grid-template-columns:repeat(2,1fr);}.stat-mini{grid-template-columns:repeat(2,1fr);}.sg-header{padding:1.5rem 1.25rem 2.5rem;}.sg-header h1{font-size:1.5rem;}.sg-section{margin:-1rem .75rem 1rem;padding:1.25rem;}}
+  </style>
+</head>
+<body>
+
+<header class="sg-header">
+  <div class="emblem"><i class="bi bi-grid-3x3-gap-fill"></i></div>
+  <h1>通用业务系统样式模板</h1>
+  <p class="lead">品牌蓝主色调，浅灰背景，深色侧边栏 + 白色顶栏。适合互联网产品、SaaS 平台、电商后台、企业内部管理系统等通用业务场景。</p>
+  <div class="d-flex gap-2 mt-3 flex-wrap">
+    <span class="badge" style="background:rgba(255,255,255,.2);color:#fff;font-weight:500;padding:5px 10px;"><i class="bi bi-circle-fill" style="font-size:.5rem;"></i> 默认风格 / default</span>
+    <span class="badge" style="background:rgba(255,255,255,.2);color:#fff;font-weight:500;padding:5px 10px;"><i class="bi bi-palette"></i> 默认风格固定展示</span>
+  </div>
+</header>
+
+<section class="sg-section">
+  <span class="sg-section-num">01 / 色彩</span>
+  <h2><i class="bi bi-palette-fill"></i>主色板</h2>
+  <p class="subtitle">主色品牌蓝 #3370FF，搭配科技感中性灰阶，传递现代、活力、可信的产品气质。</p>
+  <div class="color-grid">
+    <div class="color-card"><div class="color-swatch" style="background:var(--primary);color:#fff;">PRIMARY</div><div class="color-info"><div class="name">品牌蓝</div><div class="hex">#3370FF</div></div></div>
+    <div class="color-card"><div class="color-swatch" style="background:var(--primary-hover);color:#fff;">HOVER</div><div class="color-info"><div class="name">主色-悬停</div><div class="hex">#2860E1</div></div></div>
+    <div class="color-card"><div class="color-swatch" style="background:var(--primary-active);color:#fff;">ACTIVE</div><div class="color-info"><div class="name">主色-按下</div><div class="hex">#1F4DC4</div></div></div>
+    <div class="color-card"><div class="color-swatch" style="background:var(--primary-light);color:var(--primary);">LIGHT</div><div class="color-info"><div class="name">主色-浅底</div><div class="hex">#E1EBFF</div></div></div>
+    <div class="color-card"><div class="color-swatch" style="background:var(--success);color:#fff;">SUCCESS</div><div class="color-info"><div class="name">成功</div><div class="hex">#00B578</div></div></div>
+    <div class="color-card"><div class="color-swatch" style="background:var(--warning);color:#fff;">WARNING</div><div class="color-info"><div class="name">警示</div><div class="hex">#FF7D00</div></div></div>
+    <div class="color-card"><div class="color-swatch" style="background:var(--danger);color:#fff;">DANGER</div><div class="color-info"><div class="name">危险</div><div class="hex">#F53F3F</div></div></div>
+    <div class="color-card"><div class="color-swatch" style="background:var(--bg-body);color:var(--text-primary);">BG</div><div class="color-info"><div class="name">页面背景</div><div class="hex">#F5F6F7</div></div></div>
+    <div class="color-card"><div class="color-swatch" style="background:var(--sidebar-bg);color:#fff;">SIDEBAR</div><div class="color-info"><div class="name">深色侧边栏</div><div class="hex">#1F2329</div></div></div>
+    <div class="color-card"><div class="color-swatch" style="background:var(--text-primary);color:#fff;">TEXT-1</div><div class="color-info"><div class="name">主要文字</div><div class="hex">#1F2329</div></div></div>
+  </div>
+</section>
+
+<section class="sg-section">
+  <span class="sg-section-num">02 / 字体</span>
+  <h2><i class="bi bi-type"></i>字号规范</h2>
+  <p class="subtitle">字体族：PingFang SC / 系统默认。标题加粗、行高 1.3~1.5，层级清晰。</p>
+  <div class="typo-row"><div class="typo-label">H1 / 28px</div><div class="typo-h1">数据驱动的业务增长</div></div>
+  <div class="typo-row"><div class="typo-label">H2 / 22px</div><div class="typo-h2">高效协同的团队管理</div></div>
+  <div class="typo-row"><div class="typo-label">H3 / 18px</div><div class="typo-h3">订单管理与履约跟踪</div></div>
+  <div class="typo-row"><div class="typo-label">H4 / 16px</div><div class="typo-h4">区域二级标题</div></div>
+  <div class="typo-row"><div class="typo-label">正文 / 14px</div><div class="typo-body">为用户提供简洁高效的 SaaS 工具，让业务管理更加轻松、智能、可视化。</div></div>
+  <div class="typo-row"><div class="typo-label">小字 / 12px</div><div class="typo-small">辅助说明文字，用于时间戳、操作备注等次要信息</div></div>
+</section>
+
+<section class="sg-section">
+  <span class="sg-section-num">03 / 组件</span>
+  <h2><i class="bi bi-box"></i>基础组件</h2>
+  <p class="subtitle">按钮 / 徽章 / 表单 / 数据小卡 — 全部走 CSS 变量，主题由 data-skin 静态决定。</p>
+
+  <h6 class="mt-3 mb-2 text-muted small text-uppercase">按钮</h6>
+  <div class="mb-3">
+    <button class="btn btn-primary btn-sample"><i class="bi bi-check2"></i> 主操作</button>
+    <button class="btn btn-outline-primary btn-sample">次操作</button>
+    <button class="btn btn-secondary btn-sample">辅助</button>
+    <button class="btn btn-success btn-sample"><i class="bi bi-check"></i> 通过</button>
+    <button class="btn btn-warning btn-sample">警示</button>
+    <button class="btn btn-danger btn-sample"><i class="bi bi-trash"></i> 删除</button>
+    <button class="btn btn-link btn-sample">链接</button>
+    <button class="btn btn-primary btn-sample" disabled>禁用</button>
+  </div>
+
+  <h6 class="mt-3 mb-2 text-muted small text-uppercase">徽章</h6>
+  <div class="mb-3">
+    <span class="badge bg-primary me-2">已发布</span>
+    <span class="badge me-2" style="background:var(--primary-light);color:var(--primary);">推荐</span>
+    <span class="badge bg-success me-2">已完成</span>
+    <span class="badge bg-warning text-dark me-2">处理中</span>
+    <span class="badge bg-secondary me-2">已停用</span>
+    <span class="badge bg-danger me-2">紧急</span>
+  </div>
+
+  <h6 class="mt-3 mb-2 text-muted small text-uppercase">数据小卡</h6>
+  <div class="stat-mini">
+    <div class="stat-mini-card"><div class="label">今日订单</div><div class="value">1,248<span class="unit">单</span></div><div class="trend up"><i class="bi bi-arrow-up-short"></i>较昨日 +12%</div></div>
+    <div class="stat-mini-card"><div class="label">活跃用户</div><div class="value">8,642</div><div class="trend up"><i class="bi bi-arrow-up-short"></i>本周 +3.2%</div></div>
+    <div class="stat-mini-card"><div class="label">营收</div><div class="value">¥128.4K</div><div class="trend up"><i class="bi bi-arrow-up-short"></i>较上月 +18%</div></div>
+    <div class="stat-mini-card"><div class="label">退款率</div><div class="value">1.8%</div><div class="trend down"><i class="bi bi-arrow-down-short"></i>较上月 -0.3%</div></div>
+  </div>
+</section>
+
+<section class="sg-section">
+  <span class="sg-section-num">04 / 业务模块</span>
+  <h2><i class="bi bi-grid-3x3-gap-fill"></i>典型业务模块</h2>
+  <p class="subtitle">通用业务系统的常见模块划分，可按需重组。</p>
+  <div class="row g-3">
+    <div class="col-md-4"><div class="module-card"><div class="icon-wrap"><i class="bi bi-people-fill"></i></div><h3>用户与权限</h3><p class="desc">账号体系、角色权限、组织架构、登录认证。</p><ul class="feature-list"><li><i class="bi bi-check2"></i> 账号管理 / 角色分配</li><li><i class="bi bi-check2"></i> 部门组织树</li><li><i class="bi bi-check2"></i> 操作日志审计</li></ul></div></div>
+    <div class="col-md-4"><div class="module-card"><div class="icon-wrap"><i class="bi bi-receipt"></i></div><h3>订单交易</h3><p class="desc">订单全生命周期管理，状态流转、对账、退款。</p><ul class="feature-list"><li><i class="bi bi-check2"></i> 订单列表 / 详情</li><li><i class="bi bi-check2"></i> 退款 / 售后流程</li><li><i class="bi bi-check2"></i> 交易对账</li></ul></div></div>
+    <div class="col-md-4"><div class="module-card"><div class="icon-wrap"><i class="bi bi-bar-chart-line"></i></div><h3>数据统计</h3><p class="desc">业务数据可视化报表，多维分析、导出、订阅。</p><ul class="feature-list"><li><i class="bi bi-check2"></i> 实时仪表板</li><li><i class="bi bi-check2"></i> 多维度分析</li><li><i class="bi bi-check2"></i> 定时报表推送</li></ul></div></div>
+  </div>
+</section>
+
+<section class="sg-section">
+  <span class="sg-section-num">05 / 列表</span>
+  <h2><i class="bi bi-table"></i>列表与表格</h2>
+  <p class="subtitle">表头主色浅底 + 主色下边线，操作列图标 + 名称双显。</p>
+  <table class="table table-hover demo-table">
+    <thead><tr><th style="width:60px;">序号</th><th>业务名称</th><th>所属模块</th><th>负责人</th><th style="width:90px;">状态</th><th style="width:80px;">浏览</th><th style="width:180px;">操作</th></tr></thead>
+    <tbody>
+      <tr><td>01</td><td>2026 年 Q3 营销活动方案</td><td>营销中心</td><td>张明远</td><td><span class="badge bg-success">已发布</span></td><td>2,348</td><td class="text-nowrap"><button class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> 查看</button><button class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i> 编辑</button></td></tr>
+      <tr><td>02</td><td>8 月新产品上线公告</td><td>产品公告</td><td>李思雨</td><td><span class="badge bg-success">已发布</span></td><td>1,872</td><td class="text-nowrap"><button class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> 查看</button><button class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i> 编辑</button></td></tr>
+      <tr><td>03</td><td>用户调研问卷 V2.0</td><td>用户研究</td><td>王梓涵</td><td><span class="badge bg-warning text-dark">审核中</span></td><td>—</td><td class="text-nowrap"><button class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> 查看</button><button class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i> 编辑</button></td></tr>
+      <tr><td>04</td><td>渠道合作签约流程</td><td>渠道管理</td><td>陈晓东</td><td><span class="badge bg-secondary">草稿</span></td><td>—</td><td class="text-nowrap"><button class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> 查看</button><button class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i> 编辑</button></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="sg-section">
+  <span class="sg-section-num">06 / 真实框架</span>
+  <h2><i class="bi bi-window"></i>PC 端实际布局演示</h2>
+  <p class="subtitle">使用真实的 <code>.header-navbar</code> + <code>.sidebar</code> + <code>.main-layout</code> 类（来自 <code>shared/components.css</code>），呈现默认风格的完整框架效果。</p>
+  <div class="frame-preview">
+    <header class="header-navbar">
+      <div class="d-flex align-items-center gap-2">
+        <button class="navbar-toggler-responsive" onclick="toggleSidebar()" title="折叠菜单"><i class="bi bi-list"></i></button>
+        <div class="header-logo"><i class="bi bi-shield-check"></i> 通用业务管理系统</div>
+      </div>
+      <div class="header-right">
+        <span class="env-badge">正式版</span>
+        <span class="header-notification" title="通知"><i class="bi bi-bell"></i><span class="badge rounded-pill badge-notify">3</span></span>
+        <div class="header-user"><div class="user-avatar">管</div><span class="user-name">管理员</span></div>
+      </div>
+    </header>
+    <div class="main-layout">
+      <aside class="sidebar">
+        <div class="sidebar-section-title">工作台</div>
+        <a class="sidebar-nav-link active"><i class="bi bi-speedometer2"></i><span>工作台</span></a>
+        <a class="sidebar-nav-link"><i class="bi bi-people"></i><span>用户管理</span></a>
+        <a class="sidebar-nav-link"><i class="bi bi-receipt"></i><span>订单管理</span></a>
+        <div class="sidebar-section-title">数据分析</div>
+        <a class="sidebar-nav-link"><i class="bi bi-bar-chart"></i><span>统计报表</span></a>
+        <a class="sidebar-nav-link"><i class="bi bi-graph-up"></i><span>趋势分析</span></a>
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-section-title">系统管理</div>
+        <a class="sidebar-nav-link"><i class="bi bi-gear"></i><span>系统设置</span></a>
+        <a class="sidebar-nav-link"><i class="bi bi-shield-lock"></i><span>权限管理</span></a>
+      </aside>
+      <div class="main-content">
+        <div class="frame-breadcrumb"><i class="bi bi-house"></i> 首页 / 用户管理 / 列表</div>
+        <div class="frame-stats">
+          <div class="frame-stat-card"><div class="stat-label">今日订单</div><div class="stat-value">1,248</div><div class="stat-trend"><i class="bi bi-arrow-up-short"></i>较昨日 +12%</div></div>
+          <div class="frame-stat-card"><div class="stat-label">活跃用户</div><div class="stat-value">8,642</div><div class="stat-trend"><i class="bi bi-arrow-up-short"></i>本周 +3.2%</div></div>
+          <div class="frame-stat-card"><div class="stat-label">本月营收</div><div class="stat-value">¥128.4K</div><div class="stat-trend"><i class="bi bi-arrow-up-short"></i>较上月 +18%</div></div>
+          <div class="frame-stat-card"><div class="stat-label">退款率</div><div class="stat-value">1.8%</div><div class="stat-trend down"><i class="bi bi-arrow-down-short"></i>较上月 -0.3%</div></div>
+        </div>
+        <div class="frame-table-wrap">
+          <table class="table table-hover mb-0">
+            <thead><tr><th>业务名称</th><th>所属模块</th><th>负责人</th><th>状态</th><th class="text-end">操作</th></tr></thead>
+            <tbody>
+              <tr><td>2026 年 Q3 营销活动方案</td><td>营销中心</td><td>张明远</td><td><span class="badge bg-success">已发布</span></td><td class="text-end text-nowrap"><button class="btn btn-sm btn-outline-primary py-0">查看</button><button class="btn btn-sm btn-outline-secondary py-0">编辑</button></td></tr>
+              <tr><td>8 月新产品上线公告</td><td>产品公告</td><td>李思雨</td><td><span class="badge bg-success">已发布</span></td><td class="text-end text-nowrap"><button class="btn btn-sm btn-outline-primary py-0">查看</button><button class="btn btn-sm btn-outline-secondary py-0">编辑</button></td></tr>
+              <tr><td>用户调研问卷 V2.0</td><td>用户研究</td><td>王梓涵</td><td><span class="badge bg-warning text-dark">审核中</span></td><td class="text-end text-nowrap"><button class="btn btn-sm btn-outline-primary py-0">查看</button><button class="btn btn-sm btn-outline-secondary py-0">编辑</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sg-section">
+  <span class="sg-section-num">07 / App 移动端</span>
+  <h2><i class="bi bi-phone"></i>App 移动端布局演示</h2>
+  <p class="subtitle">使用真实的 <code>.phone-frame</code> + <code>.phone-nav-header</code> + <code>.phone-tabbar</code> + <code>.user-card</code> + <code>.stat-grid</code> 类（来自 <code>app/assets/app.css</code>）。激活 Tab、用户头像、快捷图标颜色联动呈现品牌蓝。</p>
+  <div class="phone-preview">
+    <div class="phone-frame">
+      <div class="phone-status-bar">
+        <span class="time">9:41</span>
+        <div class="status-icons"><i class="bi bi-reception-4"></i><i class="bi bi-wifi"></i><i class="bi bi-battery-full"></i></div>
+      </div>
+      <div class="phone-nav-header">
+        <div class="nav-left"><span class="nav-title">工作台</span></div>
+        <div class="nav-actions"><i class="bi bi-search"></i><i class="bi bi-bell"></i></div>
+      </div>
+      <div class="phone-content">
+        <div class="user-card mb-2">
+          <div class="avatar">管</div>
+          <div class="flex-grow-1">
+            <div class="user-name">管理员 <span class="role-badge">管理员</span></div>
+            <div class="user-unit">通用业务部 / 已实名认证</div>
+          </div>
+          <i class="bi bi-chevron-right" style="color:#c7c7cc;font-size:14px;"></i>
+        </div>
+        <div class="stat-grid mb-3">
+          <div class="stat-card"><div class="stat-num">1,248</div><div class="stat-label">今日订单</div></div>
+          <div class="stat-card success"><div class="stat-num">¥128.4K</div><div class="stat-label">本月营收</div></div>
+          <div class="stat-card warning"><div class="stat-num">86</div><div class="stat-label">待处理</div></div>
+          <div class="stat-card danger"><div class="stat-num">5</div><div class="stat-label">紧急事项</div></div>
+        </div>
+        <div class="quick-actions mb-3">
+          <div class="quick-action-item"><i class="bi bi-plus-circle"></i>新建订单</div>
+          <div class="quick-action-item"><i class="bi bi-people"></i>客户管理</div>
+          <div class="quick-action-item"><i class="bi bi-file-earmark-text"></i>报表</div>
+          <div class="quick-action-item"><i class="bi bi-headset"></i>客服</div>
+        </div>
+        <div class="section-header">最近活动</div>
+        <div class="task-card"><div class="d-flex align-items-center justify-content-between"><div class="task-title">Q3 营销活动方案</div><i class="bi bi-chevron-right" style="color:#c7c7cc;font-size:14px;"></i></div><div class="task-table">营销中心</div><div class="task-meta">张明远 · 2 小时前</div></div>
+        <div class="task-card"><div class="d-flex align-items-center justify-content-between"><div class="task-title">8 月新产品上线</div><i class="bi bi-chevron-right" style="color:#c7c7cc;font-size:14px;"></i></div><div class="task-table">产品公告</div><div class="task-meta">李思雨 · 5 小时前</div></div>
+        <div class="task-card"><div class="d-flex align-items-center justify-content-between"><div class="task-title">用户调研问卷 V2.0</div><i class="bi bi-chevron-right" style="color:#c7c7cc;font-size:14px;"></i></div><div class="task-table">用户研究</div><div class="task-meta">王梓涵 · 昨天</div></div>
+      </div>
+      <div class="phone-tabbar">
+        <a class="tab-item active"><i class="bi bi-house-fill"></i><span>首页</span></a>
+        <a class="tab-item"><i class="bi bi-chat-dots"></i><span>消息</span><span class="badge-dot">3</span></a>
+        <a class="tab-item"><i class="bi bi-briefcase"></i><span>工作</span></a>
+        <a class="tab-item"><i class="bi bi-person"></i><span>我的</span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="text-center py-4" style="color:var(--text-tertiary);font-size:.78rem;">
+  <div>默认风格样式模板 · 品牌蓝主题</div>
+  <div class="mt-1">现代 · 活力 · 高效 · 可信</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+/* === 内联 components.js（精简：仅 Toast） === */
+function showToast(msg,type){var t=document.createElement('div');t.className='alert alert-'+(type==='success'?'success':type==='danger'?'danger':type==='warning'?'warning':'info')+' position-fixed top-0 start-50 translate-middle-x mt-2';t.style.cssText='z-index:9999;max-width:400px;font-size:.82rem;padding:.5rem .9rem;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.2)';t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},2200);}
+function toggleSidebar(){document.querySelectorAll('.frame-preview').forEach(function(f){f.classList.toggle('sidebar-collapsed');});var c=document.querySelector('.frame-preview')?.classList.contains('sidebar-collapsed');if(c)localStorage.setItem('sidebar-collapsed','1');else localStorage.removeItem('sidebar-collapsed');}
+function closeSidebar(){document.body.classList.remove('sidebar-mobile-open');}
+(function(){if(localStorage.getItem('sidebar-collapsed')==='1'){document.querySelectorAll('.frame-preview').forEach(function(f){f.classList.add('sidebar-collapsed');});}})();
+</script>
+</body>
+</html>
