@@ -50,16 +50,16 @@
 <div class="filter-bar">
   <div class="row g-2 align-items-end">
     <div class="col-md-2">
-      <label class="form-label small mb-1">关键词搜索</label>
+      <label class="form-label small mb-1">[筛选条件1]</label>
       <input type="text" class="form-control form-control-sm" id="filterKeyword" placeholder="请输入关键词" oninput="applyAllFilters()">
     </div>
     <div class="col-md-2">
-      <label class="form-label small mb-1">状态</label>
+      <label class="form-label small mb-1">[筛选条件2]</label>
       <select class="form-select form-select-sm" id="filterStatus" onchange="applyAllFilters()">
         <option value="">全部</option>
-        <option value="pending">待处理</option>
-        <option value="approved">已通过</option>
-        <option value="rejected">已驳回</option>
+        <option value="option1">[选项1]</option>
+        <option value="option2">[选项2]</option>
+        <option value="option3">[选项3]</option>
       </select>
     </div>
     <div class="col-md-3">
@@ -78,7 +78,10 @@
     </div>
     <div class="col-md-3 text-md-end">
       <label class="form-label small mb-1">&nbsp;</label>
-      <div><span class="result-count text-muted small">共 N 条</span></div>
+      <div class="d-flex justify-content-end align-items-center gap-2">
+        <span class="result-count text-muted small">共 N 条</span>
+        <button class="btn btn-outline-success btn-sm" onclick="openAddForm()"><i class="bi bi-plus-lg"></i> 新增</button>
+      </div>
     </div>
   </div>
 </div>
@@ -90,7 +93,7 @@
       <tr>
         <th style="width:40px;">#</th>
         <th class="sortable" onclick="sortTable(this, 1)">[列名1]</th>
-        <th>[列名2]</th>
+        <th class="sortable" onclick="sortTable(this, 2)">[列名2]</th>
         <th>[列名3]</th>
         <th class="sortable" onclick="sortTable(this, 4)">创建时间</th>
         <th style="width:220px;white-space:nowrap;">操作</th>
@@ -99,14 +102,16 @@
     <tbody>
       <tr data-status="pending" data-id="1" data-name="[标题]" data-date="2026-08-10">
         <td class="text-muted small">1</td>
-        <td><span class="fw-semibold text-primary" style="cursor:pointer" onclick="showDetail(this)">[数据标题]</span></td>
-        <td><span class="text-muted small">[内容]</span></td>
-        <td><span class="badge bg-warning text-dark">待处理</span></td>
+        <td><span class="fw-semibold text-primary" style="cursor:pointer" onclick="showDetail(this)">[列名1值]</span></td>
+        <td><span class="text-muted small">[列名2值]</span></td>
+        <td>[列名3值]</td>
         <td class="text-nowrap small">2026-08-10 10:30</td>
         <td class="text-nowrap">
+          <!-- 操作按钮按业务需求取舍，不要无脑全放；放了就必须有对应函数适配 -->
           <div class="d-flex gap-2">
             <button class="btn btn-sm btn-outline-primary" onclick="showDetail(this)" title="查看"><i class="bi bi-eye"></i> 查看</button>
             <button class="btn btn-sm btn-outline-secondary" onclick="editItem(this)" title="编辑"><i class="bi bi-pencil"></i> 编辑</button>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteItem(this)" title="删除"><i class="bi bi-trash"></i> 删除</button>
           </div>
         </td>
       </tr>
@@ -119,9 +124,9 @@
       <select class="form-select form-select-sm d-inline-block" style="width:auto;min-width:90px;" onchange="changePageSize(this.value)">
         <option value="10" selected>10条/页</option><option value="30">30条/页</option><option value="50">50条/页</option><option value="100">100条/页</option>
       </select>
-      <div class="d-flex gap-2">
-        <button class="btn btn-sm btn-outline-secondary page-btn disabled" onclick="goPage(currentPage-1)">上一页</button>
-        <button class="btn btn-sm btn-outline-secondary page-btn disabled" onclick="goPage(currentPage+1)">下一页</button>
+      <div>
+        <button class="btn btn-sm btn-outline-secondary page-btn" onclick="goPage(currentPage-1)">上一页</button>
+        <button class="btn btn-sm btn-outline-secondary page-btn" onclick="goPage(currentPage+1)">下一页</button>
       </div>
     </div>
   </div>
@@ -175,10 +180,25 @@
   </div>
 </div>
 
+<!-- 确认弹窗（删除等操作使用） -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title" id="modalTitle">确认</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-primary" id="modalConfirmBtn">确认</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   function showDetail(el) { var row = el.closest('tr'); document.getElementById('detailName').textContent = row.dataset.name || '-'; new bootstrap.Modal(document.getElementById('detailModal')).show(); }
   function editItem(el) { var row = el.closest('tr'); document.getElementById('formTitle').textContent = '编辑'; document.getElementById('formField').value = row.dataset.name || ''; new bootstrap.Modal(document.getElementById('formModal')).show(); }
   function openAddForm() { document.getElementById('formTitle').textContent = '新增'; document.getElementById('formField').value = ''; new bootstrap.Modal(document.getElementById('formModal')).show(); }
+  function deleteItem(el) { var row = el.closest('tr'); confirmModal('删除确认', '确定要删除「' + (row.dataset.name || '该记录') + '」吗？', function(){ row.remove(); showToast('删除成功', 'success'); }); }
   function saveForm() { showToast('保存成功', 'success'); bootstrap.Modal.getInstance(document.getElementById('formModal')).hide(); }
 </script>
 ```
@@ -229,10 +249,10 @@
 
 ```html
 <div class="dashboard-stat-row mb-4">
-  <div class="stat-card"><div class="stat-label">总数</div><div class="stat-value" style="color:var(--primary);">156</div><div class="stat-desc"><i class="bi bi-arrow-up" style="color:var(--success);"></i> 较上月 +12</div></div>
-  <div class="stat-card"><div class="stat-label">已完成</div><div class="stat-value" style="color:var(--success);">108</div><div class="stat-desc">本月累计</div></div>
-  <div class="stat-card"><div class="stat-label">进行中</div><div class="stat-value" style="color:var(--warning);">34</div><div class="stat-desc">待处理</div></div>
-  <div class="stat-card"><div class="stat-label">超时</div><div class="stat-value" style="color:var(--danger);">7</div><div class="stat-desc">需关注</div></div>
+  <div class="stat-card"><div class="stat-label">[指标1名称]</div><div class="stat-value" style="color:var(--primary);">[数值]</div><div class="stat-desc"><i class="bi bi-arrow-up" style="color:var(--success);"></i> 较上月 +[数值]</div></div>
+  <div class="stat-card"><div class="stat-label">[指标2名称]</div><div class="stat-value" style="color:var(--success);">[数值]</div><div class="stat-desc">[说明]</div></div>
+  <div class="stat-card"><div class="stat-label">[指标3名称]</div><div class="stat-value" style="color:var(--warning);">[数值]</div><div class="stat-desc">[说明]</div></div>
+  <div class="stat-card"><div class="stat-label">[指标4名称]</div><div class="stat-value" style="color:var(--danger);">[数值]</div><div class="stat-desc">[说明]</div></div>
 </div>
 ```
 
@@ -304,7 +324,8 @@
   </div>
   <nav class="phone-tabbar">
     <a href="index.html" class="tab-item [active]"><i class="bi bi-house"></i>首页</a>
-    <a href="messages.html" class="tab-item [active]"><i class="bi bi-bell"></i>消息<span class="badge-dot">3</span></a>
+    <!-- 中间自定义 Tab：1~2 个（需要第二个时复制下一行），符合移动端设计（2~4 字场景入口），勿照搬后台管理标签；无合适内容回退「消息 messages.html」 -->
+    <a href="[tab].html" class="tab-item [active]"><i class="bi bi-[icon]"></i>[自定义]</a>
     <a href="profile.html" class="tab-item [active]"><i class="bi bi-person"></i>我的</a>
   </nav>
 </div>
@@ -360,7 +381,7 @@
 ```html
 <div class="filter-tabs mb-2">
   <button class="filter-tab active" onclick="switchFilter(this,'all')">全部</button>
-  <button class="filter-tab" onclick="switchFilter(this,'pending')">待处理</button>
+  <button class="filter-tab" onclick="switchFilter(this,'[筛选值]')">[筛选项]</button>
 </div>
 ```
 
@@ -384,9 +405,9 @@
 ```html
 <div class="stat-grid mb-3">
   <div class="stat-card"><div class="stat-num">12</div><div class="stat-label">今日</div></div>
-  <div class="stat-card warning"><div class="stat-num">5</div><div class="stat-label">进行中</div></div>
-  <div class="stat-card success"><div class="stat-num">48</div><div class="stat-label">已完成</div></div>
-  <div class="stat-card danger"><div class="stat-num">3</div><div class="stat-label">超时</div></div>
+  <div class="stat-card warning"><div class="stat-num">[数值]</div><div class="stat-label">[指标1]</div></div>
+  <div class="stat-card success"><div class="stat-num">[数值]</div><div class="stat-label">[指标2]</div></div>
+  <div class="stat-card danger"><div class="stat-num">[数值]</div><div class="stat-label">[指标3]</div></div>
 </div>
 ```
 
@@ -618,12 +639,28 @@ initPagination(10);
 ```
 
 ```html
-<!-- 分区注释 ==== --> <!-- 可见性注释 --> <!-- 状态 Badge -->
-<span class="badge bg-warning text-dark">进行中</span>
-<span class="badge bg-success">已完成</span>
+<!-- 状态 Badge 示例 -->
+<span class="badge bg-warning text-dark">[状态1]</span>
+<span class="badge bg-success">[状态2]</span>
 <!-- 表格行属性 --><tr data-status="pending">
 <!-- 按钮 --><button class="btn btn-sm btn-outline-primary"><i class="bi bi-[name] me-1"></i> 操作</button>
 ```
+
+**表格操作列按钮配色与图标规范（按业务语义选型，不可随意搭配）：**
+
+| 操作 | 配色 | 图标 |
+|------|------|------|
+| 查看/详情 | `btn-outline-primary` | `bi-eye` |
+| 编辑 | `btn-outline-secondary` | `bi-pencil` |
+| 删除 | `btn-outline-danger` | `bi-trash` |
+| 新增/添加 | `btn-outline-success` | `bi-plus-lg` |
+| 审核通过/批准 | `btn-outline-success` | `bi-check-circle` |
+| 驳回/拒绝 | `btn-outline-danger` | `bi-x-circle` |
+| 导出 | `btn-outline-primary` | `bi-download` |
+| 提交 | `btn-outline-primary` | `bi-send` |
+| 配置/设置 | `btn-outline-secondary` | `bi-gear` |
+| 启用/展示 | `btn-outline-success` | `bi-eye` |
+| 禁用/停用 | `btn-outline-warning text-dark` | `bi-pause-circle` |
 
 CSS：始终用 `var(--primary)`、`var(--gray-200)` 等变量，不硬编码色值。
 
@@ -647,7 +684,7 @@ CSS：始终用 `var(--primary)`、`var(--gray-200)` 等变量，不硬编码色
 :root[data-skin="default"] {
   --primary:#3370FF;--primary-hover:#2860E1;--primary-active:#1F4DC4;--primary-light:#E1EBFF;--primary-bg:#F0F5FF;
   --success:#00B578;--success-light:#E8F9F2;--warning:#FF7D00;--warning-light:#FFF3E8;--danger:#F53F3F;--danger-light:#FFEDED;
-  --text-primary:#1F2329;--text-secondary:#646A73;--text-tertiary:#8F959E;--text-disabled:#BEC2C7;
+  --text-primary:#1F2329;--text-secondary:#646A73;--text-tertiary:#8F959E;--text-disabled:#BEC2C7;--text-link:#3370FF;
   --bg-body:#F5F6F7;--bg-white:#FFFFFF;--bg-card:#FFFFFF;--bg-hover:#F2F3F5;--bg-active:#E8EAED;--bg-mask:rgba(0,0,0,0.4);
   --border-default:#E5E6EB;--border-light:#F0F1F4;--border-heavy:#C9CDD4;
   --sidebar-bg:#1F2329;--sidebar-hover:#2B2F36;--sidebar-text:#8B8F97;--sidebar-text-hover:#C9CDD4;--sidebar-text-active:#FFFFFF;--sidebar-section-title:#5E6269;--sidebar-divider:rgba(255,255,255,0.06);
@@ -656,9 +693,9 @@ CSS：始终用 `var(--primary)`、`var(--gray-200)` 等变量，不硬编码色
   --radius-xs:4px;--radius-sm:6px;--radius-md:8px;--radius-lg:12px;--radius-xl:16px;--radius-full:9999px;
   --space-xs:4px;--space-sm:8px;--space-md:12px;--space-lg:16px;--space-xl:20px;--space-2xl:24px;--space-3xl:32px;
   --font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
-  --font-size-base:13px;--font-size-md:14px;--font-size-lg:16px;--font-size-xl:18px;--font-size-2xl:20px;--font-size-3xl:24px;
+  --font-size-xs:12px;--font-size-sm:13px;--font-size-base:14px;--font-size-md:14px;--font-size-lg:18px;--font-size-xl:18px;--font-size-2xl:20px;--font-size-3xl:24px;
   --sidebar-width:220px;--sidebar-collapsed-width:64px;
-  --accent-gold:transparent;
+  --accent-gold:transparent;--primary-active-bg:rgba(51,112,255,0.12);
 }
 
 /* ---- 政企风格 ---- */
@@ -670,7 +707,7 @@ CSS：始终用 `var(--primary)`、`var(--gray-200)` 等变量，不硬编码色
   --border-default:#D6D2C5;--border-light:#E8E4D7;--border-heavy:#A8A293;
   --sidebar-bg:#0F1E3D;--sidebar-hover:#1A2A4D;--sidebar-text:#94A3B8;--sidebar-text-hover:#CBD5E1;--sidebar-text-active:#FFFFFF;--sidebar-section-title:#64748B;--sidebar-divider:rgba(255,255,255,0.08);
   --header-bg:#FFFFFF;--header-text:#0F1E3D;--header-border:#D6D2C5;
-  --accent-gold:#B8860B;
+  --accent-gold:#B8860B;--text-link:#1E3A8A;--primary-active-bg:rgba(30,58,138,0.12);
 }
 
 /* ---- 党建风格 ---- */
@@ -682,7 +719,7 @@ CSS：始终用 `var(--primary)`、`var(--gray-200)` 等变量，不硬编码色
   --border-default:#E8D9B0;--border-light:#F0E5C5;--border-heavy:#B89A60;
   --sidebar-bg:#7F1D1D;--sidebar-hover:#991B1B;--sidebar-text:rgba(255,255,255,0.7);--sidebar-text-hover:rgba(255,255,255,0.9);--sidebar-text-active:#FFFFFF;--sidebar-section-title:rgba(255,255,255,0.5);--sidebar-divider:rgba(255,255,255,0.1);
   --header-bg:#C9302C;--header-text:#FFFFFF;--header-border:#A82420;
-  --accent-gold:#F59E0B;
+  --accent-gold:#F59E0B;--text-link:#C9302C;--primary-active-bg:rgba(201,48,44,0.12);
 }
 
 /* ---- 暗色模式（与主题正交叠加） ---- */
@@ -691,6 +728,8 @@ CSS：始终用 `var(--primary)`、`var(--gray-200)` 等变量，不硬编码色
   --text-primary:#E5E5E5;--text-secondary:#999999;--text-tertiary:#707070;--text-disabled:#555555;
   --border-default:#3D3D3D;--border-light:#333333;--border-heavy:#555555;
   --header-bg:#262626;--header-text:#E5E5E5;--header-border:#333333;
+  --sidebar-bg:#1A1A1A;--sidebar-hover:#2B2B2B;--sidebar-text:#808080;--sidebar-text-hover:#B3B3B3;--sidebar-text-active:#E5E5E5;--sidebar-section-title:#666666;--sidebar-divider:rgba(255,255,255,0.04);
+  --primary-bg:#1A2D4D;--primary-light:#1F3A66;
   --shadow-xs:0 1px 2px rgba(0,0,0,0.2);--shadow-sm:0 1px 3px rgba(0,0,0,0.3);--shadow-md:0 4px 12px rgba(0,0,0,0.4);--shadow-lg:0 8px 24px rgba(0,0,0,0.5);--shadow-card:0 1px 4px rgba(0,0,0,0.2);
 }
 [data-theme="dark"][data-skin="gov"]   { --sidebar-bg:#0A1428;--sidebar-text:#64748B; }
@@ -728,14 +767,14 @@ a:hover { color: var(--primary-hover); }
   padding: 0 var(--space-lg);
   box-shadow: var(--shadow-xs);
 }
-.header-navbar .header-logo { font-size: var(--font-size-lg); font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: var(--space-sm); white-space: nowrap; }
+.header-navbar .header-logo { font-size: var(--font-size-lg); font-weight: 600; color: var(--header-text); display: flex; align-items: center; gap: var(--space-sm); white-space: nowrap; }
 .header-navbar .header-logo i { font-size: 1.3rem; color: var(--primary); }
 .header-navbar .header-right { display: flex; align-items: center; gap: var(--space-md); }
 .header-navbar .env-badge { font-size: var(--font-size-xs); padding: 2px 8px; border-radius: var(--radius-full); background: var(--success-light); color: var(--success); font-weight: 500; }
-.header-navbar .header-notification { color: var(--text-secondary); cursor: pointer; font-size: 1.15rem; position: relative; padding: 6px; border-radius: var(--radius-sm); }
+.header-navbar .header-notification { color: var(--header-text); cursor: pointer; font-size: 1.15rem; position: relative; padding: 6px; border-radius: var(--radius-sm); }
 .header-navbar .header-notification:hover { background: var(--bg-hover); color: var(--text-primary); }
 .header-navbar .header-notification .badge-notify { position: absolute; top: 2px; right: 2px; min-width: 16px; height: 16px; font-size: 10px; font-weight: 600; border-radius: var(--radius-full); background: var(--danger); color: #fff; text-align: center; padding: 0 4px; line-height: 16px; }
-.header-navbar .header-user { display: flex; align-items: center; gap: var(--space-sm); cursor: pointer; color: var(--text-primary); padding: 4px 8px; border-radius: var(--radius-sm); }
+.header-navbar .header-user { display: flex; align-items: center; gap: var(--space-sm); cursor: pointer; color: var(--header-text); padding: 4px 8px; border-radius: var(--radius-sm); }
 .header-navbar .header-user:hover { background: var(--bg-hover); }
 .header-navbar .header-user .user-avatar { width: 30px; height: 30px; border-radius: var(--radius-full); background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: var(--font-size-sm); font-weight: 600; }
 .header-navbar .header-user .user-name { font-size: var(--font-size-md); font-weight: 500; }
@@ -746,13 +785,14 @@ a:hover { color: var(--primary-hover); }
 .main-layout { display: flex; padding-top: var(--header-height); }
 
 /* ---- Sidebar ---- */
-.sidebar { position: fixed; top: var(--header-height); left: 0; bottom: 0; width: var(--sidebar-width); z-index: 1010; background: var(--sidebar-bg); overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; }
+.sidebar { position: fixed; top: var(--header-height); left: 0; bottom: 0; width: var(--sidebar-width); z-index: 1010; background: var(--sidebar-bg); overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; scrollbar-width: none; }
+.sidebar::-webkit-scrollbar { display: none; }
 .sidebar .sidebar-section-title { font-size: var(--font-size-xs); font-weight: 500; color: var(--sidebar-section-title); padding: var(--space-lg) var(--space-lg) var(--space-sm); text-transform: uppercase; letter-spacing: 0.05em; }
 .sidebar .sidebar-nav-link { display: flex; align-items: center; gap: 10px; padding: 8px 12px; margin: 1px 8px; color: var(--sidebar-text); text-decoration: none; font-size: var(--font-size-md); font-weight: 400; border-radius: var(--radius-sm); transition: all 0.15s; position: relative; cursor: pointer; border: none; background: none; width: auto; text-align: left; }
 .sidebar .sidebar-nav-link i { font-size: 1.1rem; width: 20px; text-align: center; flex-shrink: 0; color: var(--sidebar-text); }
 .sidebar .sidebar-nav-link:hover { background: var(--sidebar-hover); color: var(--sidebar-text-hover); }
 .sidebar .sidebar-nav-link:hover i { color: var(--sidebar-text-hover); }
-.sidebar .sidebar-nav-link.active { background: rgba(51,112,255,0.12); color: var(--sidebar-text-active); font-weight: 500; }
+.sidebar .sidebar-nav-link.active { background: var(--primary-active-bg); color: var(--sidebar-text-active); font-weight: 500; }
 .sidebar .sidebar-nav-link.active i { color: var(--primary); }
 .sidebar .sidebar-nav-link.active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 16px; background: var(--primary); border-radius: 0 2px 2px 0; }
 .sidebar .collapse { padding: 0; }
@@ -875,15 +915,6 @@ th.sortable::after { content: ' ↕'; font-size: 10px; color: var(--text-disable
 @keyframes dropdownFadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
 
 /* ---- Dark Mode ---- */
-[data-theme="dark"] {
-  --bg-body: #1A1A1A; --bg-white: #262626; --bg-card: #262626; --bg-hover: #333333; --bg-active: #3D3D3D;
-  --text-primary: #E5E5E5; --text-secondary: #999999; --text-tertiary: #707070; --text-disabled: #555555;
-  --border-default: #3D3D3D; --border-light: #333333; --border-heavy: #555555;
-  --header-bg: #262626; --header-border: #333333;
-  --sidebar-bg: #1A1A1A; --sidebar-hover: #2B2B2B; --sidebar-text: #808080; --sidebar-text-hover: #B3B3B3; --sidebar-text-active: #E5E5E5; --sidebar-section-title: #666666; --sidebar-divider: rgba(255,255,255,0.04);
-  --primary-bg: #1A2D4D; --primary-light: #1F3A66;
-  --shadow-xs: 0 1px 2px rgba(0,0,0,0.2); --shadow-sm: 0 1px 3px rgba(0,0,0,0.3); --shadow-md: 0 4px 12px rgba(0,0,0,0.4); --shadow-lg: 0 8px 24px rgba(0,0,0,0.5); --shadow-card: 0 1px 4px rgba(0,0,0,0.2);
-}
 [data-theme="dark"] body { background: var(--bg-body); }
 [data-theme="dark"] .content-card, [data-theme="dark"] .stat-card, [data-theme="dark"] .filter-bar, [data-theme="dark"] .table-container, [data-theme="dark"] .form-section, [data-theme="dark"] .detail-card { background: var(--bg-card); border-color: var(--border-light); }
 [data-theme="dark"] .table-container .table thead th { background: #2A2A2A; color: var(--text-tertiary); }
@@ -891,7 +922,7 @@ th.sortable::after { content: ' ↕'; font-size: 10px; color: var(--text-disable
 [data-theme="dark"] .table-container .table tbody tr:hover { background: var(--bg-hover); }
 [data-theme="dark"] .pagination-bar { border-top-color: var(--border-light); }
 [data-theme="dark"] .form-control, [data-theme="dark"] .form-select { background: #333333; border-color: var(--border-default); color: var(--text-primary); }
-[data-theme="dark"] .form-control:focus, [data-theme="dark"] .form-select:focus { box-shadow: 0 0 0 3px rgba(51,112,255,0.15); }
+[data-theme="dark"] .form-control:focus, [data-theme="dark"] .form-select:focus { box-shadow: 0 0 0 3px var(--primary-light); }
 [data-theme="dark"] .header-navbar { background: var(--bg-card); border-color: var(--border-light); }
 [data-theme="dark"] .header-navbar .header-logo { color: var(--text-primary); }
 [data-theme="dark"] .header-navbar .header-notification { color: var(--text-secondary); }
@@ -1177,7 +1208,7 @@ body.phone-frame-body {
 
 /* Form controls */
 .phone-content .form-control, .phone-content .form-select { font-size: 15px; padding: 10px 14px; border-radius: 8px; border-color: #d0d0d5; background: #ffffff; }
-.phone-content .form-control:focus, .phone-content .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(51,112,255,0.12); }
+.phone-content .form-control:focus, .phone-content .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
 .phone-content .btn { font-weight: 500; font-size: 15px; padding: 10px 20px; border-radius: 8px; }
 .phone-content .btn-sm { font-size: 13px; padding: 6px 14px; }
 .phone-content .btn-primary { background: var(--primary); border-color: var(--primary); }

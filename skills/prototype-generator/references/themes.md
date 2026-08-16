@@ -26,7 +26,7 @@
 
 | 维度 | 默认风格 `default` | 政企风格 `gov` | 党建风格 `party` |
 |------|------------------|---------------|------------------|
-| **触发关键词** | （默认） | "政企" | "党建" |
+| **触发关键词** | （默认） | "政企/政务/政府/国企/国资/事业单位/行政/机关" | "党建/党务/党支部/党组织/党员/党课/党群/先锋" |
 | **主色 `var(--primary)`** | `#3370FF` 品牌蓝 | `#1E3A8A` 藏蓝 | `#C9302C` 党旗红 |
 | **主色深 `var(--primary-dark)`** | `#1F4DC4` | `#172554` | `#8B1A1A` |
 | **主色浅 `var(--primary-light)`** | `#E1EBFF` | `#DBE5FE` | `#FCE4E3` |
@@ -43,14 +43,18 @@
 
 ## 二、自动识别逻辑
 
-**第 0 步**扫描用户需求文本（大小写不敏感）：
+**第 0 步**仅扫描"XXX 原型"中的系统名称 XXX（大小写不敏感），**不扫描需求中的背景描述、功能说明等其他文字**：
 
 ```js
 function detectSkin(req) {
-  if (req.indexOf('党建') >= 0) return 'party';   // 党建优先
-  if (req.indexOf('政企') >= 0) return 'gov';     // 政企
-  return 'default';                                // 默认
+  var name = extractSystemName(req);  // 提取"XXX 原型"中的系统名称 XXX
+  var partyWords = ['党建','党务','党支部','党组织','党员','党课','党群','先锋'];
+  var govWords   = ['政企','政务','政府','国企','国资','事业单位','行政','机关'];
+  if (partyWords.some(w => name.indexOf(w) >= 0)) return 'party';   // 党建优先
+  if (govWords.some(w => name.indexOf(w) >= 0))  return 'gov';      // 政企
+  return 'default';                                                  // 默认
 }
+```
 
 **应用方式**：
 
@@ -97,64 +101,7 @@ function detectSkin(req) {
 
 ## 四、CSS 变量定义模板
 
-在 `shared/design-tokens.css` 中：
-
-```css
-/* ============================================================
-   主题色板（仅颜色变量，结构/布局/组件不在此定义）
-   ============================================================ */
-
-:root,
-:root[data-skin="default"] {
-  --primary: #3370FF; --primary-hover: #2860E1; --primary-active: #1F4DC4;
-  --primary-light: #E1EBFF; --primary-bg: #F0F5FF;
-  --bg-body: #F5F6F7; --bg-white: #FFFFFF; --bg-card: #FFFFFF; --bg-hover: #F2F3F5; --bg-active: #E8EAED;
-  --header-bg: #FFFFFF; --header-text: #1F2329; --header-border: #E5E6EB;
-  --sidebar-bg: #1F2329; --sidebar-hover: #2B2F36; --sidebar-text: #8B8F97;
-  --sidebar-text-hover: #C9CDD4; --sidebar-text-active: #FFFFFF;
-  --sidebar-section-title: #5E6269; --sidebar-divider: rgba(255,255,255,0.06);
-  --accent-gold: transparent;   /* 默认风格不使用 */
-}
-
-:root[data-skin="gov"] {
-  --primary: #1E3A8A; --primary-hover: #1E40AF; --primary-active: #172554;
-  --primary-light: #DBE5FE; --primary-bg: #EFF4FE;
-  --bg-body: #F4F1EA; --bg-white: #FFFFFF; --bg-card: #FFFFFF; --bg-hover: #ECEAE3; --bg-active: #E5E1D6;
-  --header-bg: #FFFFFF; --header-text: #0F1E3D; --header-border: #D6D2C5;
-  --sidebar-bg: #0F1E3D; --sidebar-hover: #1A2A4D; --sidebar-text: #94A3B8;
-  --sidebar-text-hover: #CBD5E1; --sidebar-text-active: #FFFFFF;
-  --sidebar-section-title: #64748B; --sidebar-divider: rgba(255,255,255,0.08);
-  --accent-gold: #B8860B;
-}
-
-:root[data-skin="party"] {
-  --primary: #C9302C; --primary-hover: #A82420; --primary-active: #8B1A1A;
-  --primary-light: #FCE4E3; --primary-bg: #FEF1F0;
-  --bg-body: #FDF6E3; --bg-white: #FFFFFF; --bg-card: #FFFFFF; --bg-hover: #F5EBD0; --bg-active: #EFE0BD;
-  --header-bg: #C9302C; --header-text: #FFFFFF; --header-border: #A82420;
-  --sidebar-bg: #7F1D1D; --sidebar-hover: #991B1B; --sidebar-text: rgba(255,255,255,0.7);
-  --sidebar-text-hover: rgba(255,255,255,0.9); --sidebar-text-active: #FFFFFF;
-  --sidebar-section-title: rgba(255,255,255,0.5); --sidebar-divider: rgba(255,255,255,0.1);
-  --accent-gold: #F59E0B;
-}
-
-/* ============================================================
-   暗色模式（与主题正交叠加，按主题继承 bg / text）
-   ============================================================ */
-[data-theme="dark"] {
-  --bg-body: #1A1A1A; --bg-white: #262626; --bg-card: #262626;
-  --bg-hover: #333333; --bg-active: #3D3D3D;
-  --text-primary: #E5E5E5; --text-secondary: #999999;
-  --text-tertiary: #707070; --text-disabled: #555555;
-  --border-default: #3D3D3D; --border-light: #333333; --border-heavy: #555555;
-  --header-bg: #262626; --header-border: #333333;
-}
-
-/* 暗色 + 政企：sidebar 略偏深蓝黑 */
-[data-theme="dark"][data-skin="gov"] { --sidebar-bg: #0A1428; --sidebar-text: #64748B; }
-/* 暗色 + 党建：sidebar 仍深红 */
-[data-theme="dark"][data-skin="party"] { --sidebar-bg: #450A0A; }
-```
+完整令牌（含 `--font-size-xs/sm`、`--text-link`、`--primary-active-bg` 以及暗色完整变量）以 [examples.md 附录 A](examples.md) 为唯一来源，直接整段复制到 `shared/design-tokens.css`，不在此重复维护精简版。
 
 ---
 
@@ -270,7 +217,7 @@ body, .header-navbar, .sidebar, .card, .content-card, .stat-card,
 
 如果一个旧项目（无主题系统）需要迁移为固定主题（生成时确定）：
 
-1. 复制本文件第 4 节的 `[data-skin="..."]` 变量块，追加到现有 `shared/design-tokens.css` 的 `:root` 之后。
+1. 复制 [examples.md 附录 A](examples.md) 的完整令牌（含三套 `[data-skin="..."]` 变量块），追加到现有 `shared/design-tokens.css` 的 `:root` 之后。
 2. 移除现有 `shared/components.js` 中任何 `SKIN_LIST` / `getSkin` / `setSkin` / `cycleSkin` 等主题切换代码（`toggleTheme()` 单独保留，仅用于 App 端暗色模式）。
 3. 仅在 App 端页面的 `<head>` 内、CSS 之前，插入本文件第 3 节的 FOUC 阻止脚本（只处理暗色模式，不读 `skin`）。
 4. 根据项目需求关键词确定唯一 `data-skin` 值，写死在所有页面 `<html data-skin="...">` 上；删除任何主题切换按钮。
@@ -285,8 +232,8 @@ body, .header-navbar, .sidebar, .card, .content-card, .stat-card,
 **生成新项目时**：
 
 1. 用户说："帮我做一个党建学习管理系统原型"
-2. 技能第 0 步检测到"党建" → `data-skin="party"`
+2. 技能第 0 步在系统名称"党建学习管理系统"中检测到"党建" → `data-skin="party"`
 3. 所有页面 `<html>` 上写 `<html lang="zh-CN" data-skin="party">`
-4. `shared/design-tokens.css` 内联本文件第 4 节全部三套变量
+4. `shared/design-tokens.css` 内联 [examples.md 附录 A](examples.md) 全部三套变量
 5. 业务页面照常生成，无需关心主题细节（颜色全部走变量）
 6. 所有页面保持 `data-skin="party"` 固定不变，不放任何主题切换按钮
