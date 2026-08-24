@@ -266,22 +266,9 @@
 <div class="state-network_error d-none text-center py-5"><i class="bi bi-wifi-off" style="font-size:3rem;color:var(--gray-300);"></i><p class="mt-3 text-muted">网络连接已断开</p></div>
 ```
 
-### 1.7 确认弹窗模板
+### 1.7 确认弹窗
 
-```html
-<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-sm">
-    <div class="modal-content">
-      <div class="modal-header"><h5 class="modal-title" id="modalTitle">确认</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-      <div class="modal-body" id="modalBody"></div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-        <button type="button" class="btn btn-primary" id="modalConfirmBtn">确认</button>
-      </div>
-    </div>
-  </div>
-</div>
-```
+`#confirmModal` 节点已包含在 §1.2 列表页模板末尾，业务页**不要再复制本节模板**，避免重复 ID。`confirmModal(title, body, onConfirm)` 函数由 `shared/components.js` 提供。
 
 ---
 
@@ -525,6 +512,8 @@
 
 ## 五、PC 框架页 `pc/index.html`
 
+> **机制：单 iframe**（顶栏 + 侧边栏 + 单内容区，点击菜单/跳转直接切换 iframe 页面，无多页签栏）。完整规范见 [references/tianditu-map.md §「框架页必备结构」](tianditu-map.md)。
+
 ```html
 <!DOCTYPE html>
 <html lang="zh-CN" data-skin="default">
@@ -565,36 +554,29 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../shared/components.js"></script>
 <script>
-  // 全局加载函数：被侧边栏菜单 / 顶栏通知 / iframe 内部面包屑调用
-  // 解决 target="mainFrame" 在 iframe sandbox 下失效的问题
+  // 单 iframe 容器：侧边栏/顶栏/业务页跳转直接切换 iframe 页面
   window.loadPage = function(url) {
+    var baseUrl = (url||'').split('?')[0];
     document.querySelectorAll('.sidebar-nav-link').forEach(function(s){s.classList.remove('active');});
-    var m = document.querySelector('.sidebar-nav-link[data-url="'+url+'"]');
+    var m = document.querySelector('.sidebar-nav-link[data-url="'+baseUrl+'"]');
     if (m) m.classList.add('active');
-    var frame = document.getElementById('mainFrame');
     var overlay = document.getElementById('iframeLoading');
+    var frame = document.getElementById('mainFrame');
     if (frame && url) { if (overlay) overlay.style.display = 'flex'; frame.src = url; }
   };
-  // 侧边栏菜单点击：调用 loadPage
+  /** 业务页打开地图页（含地图场景）：直接切 iframe 到 pc/map.html */
+  window.openMapTab = function(url, title) { loadPage(url); };
+  // 侧边栏菜单点击切换页面
   document.querySelectorAll('.sidebar-nav-link[data-url]').forEach(function(item){
     item.addEventListener('click', function(e){
       e.preventDefault();
       loadPage(this.getAttribute('data-url'));
     });
   });
-  // iframe 加载完：关闭 loading + 按 URL 恢复 sidebar active 状态
-  // 解决刷新页面后 active 丢失 / iframe 内跳走后 active 不同步的问题
+  // iframe 加载完：关闭 loading
   var _mainFrame = document.getElementById('mainFrame');
   if (_mainFrame) _mainFrame.addEventListener('load', function(){
     var o = document.getElementById('iframeLoading'); if (o) o.style.display = 'none';
-    try {
-      var url = this.contentWindow.location.pathname.split('/').pop();
-      if (url) {
-        document.querySelectorAll('.sidebar-nav-link').forEach(function(s){s.classList.remove('active');});
-        var m = document.querySelector('.sidebar-nav-link[data-url="'+url+'"]');
-        if (m) m.classList.add('active');
-      }
-    } catch(e) { /* 跨域时静默忽略 */ }
   });
   // 侧边栏折叠状态持久化
   if (localStorage.getItem('sidebar-collapsed')==='1') document.body.classList.add('sidebar-collapsed');
@@ -615,9 +597,10 @@
 ```
 
 > **关键约束**：
-> 1. **跳转方式**：业务页用 `parent.loadPage('xxx.html')` 跳转，不要再用 `target="mainFrame"`（iframe sandbox 下失效）。
-> 2. **active 持久化**：PC 框架页通过 iframe `load` 事件读取 `contentWindow.location.pathname` 自动同步 sidebar `.active` 类，刷新或跳转后菜单高亮不会丢。
-> 3. **不放暗色切换按钮、不放 FOUC 暗色脚本**：PC 端不提供暗色模式（暗色仅 App 端）。**不放主题切换按钮**——项目主题由 `<html data-skin="...">` 在生成时一次性确定，业务用户无需切换。
+> 1. **跳转方式**：业务页用 `parent.loadPage('xxx.html')` 跳转，iframe 直接切换到目标页。不要再用 `target="mainFrame"`（iframe sandbox 下失效）。
+> 2. **单 iframe 机制**：顶栏 + 侧边栏 + 单内容区，无多页签栏；侧边栏菜单点击、业务页跳转、通知红点、详情 Modal 跳转统一走 `loadPage(url)`，切换后侧边栏高亮自动同步。
+> 3. **地图页**：业务详情页「在地图中查看」按钮调用 `parent.openMapTab('map.html?...', '地图:xxx')`（兼容别名，内部即 `loadPage`），地图页在同一 iframe 内打开，返回业务页走侧边栏或面包屑。
+> 4. **不放暗色切换按钮、不放 FOUC 暗色脚本**：PC 端不提供暗色模式（暗色仅 App 端）。**不放主题切换按钮**——项目主题由 `<html data-skin="...">` 在生成时一次性确定，业务用户无需切换。
 
 ---
 
@@ -668,15 +651,36 @@ CSS：始终用 `var(--primary)`、`var(--gray-200)` 等变量，不硬编码色
 
 ---
 
+> **驾驶舱子系统已独立抽离** → 详见 [references/dashboard.md](dashboard.md)。
+
+---
+
+## 七、PC 主题适配要点
+
+| 主题 | 暗色底 | 强调色 | 地图色阶 |
+|------|--------|--------|----------|
+| `default` | 深灰黑 `#0a0e1a → #1a1f2e` | 蓝渐变 + 金点缀 | `['#1a2d4d', '#3370FF', '#0a1a35']` |
+| `gov` | 深藏蓝 `#050b1f → #0a1428` | 藏蓝 + 暗金 | `['#1e3a8a', '#3b5fb8', '#172554']` |
+| `party` | 深红黑 `#1a0508 → #2d0a0a` | 红 + 五星金 | `['#FCE4E3', '#C9302C', '#7F1D1D']` |
+
+> **大屏 `--db-*` 完整变量定义**（含 `--db-accent` / `--db-accent-2` / `--db-accent-warm` / `--db-text` 等）以 [dashboard.md §2](dashboard.md#2-三主题-css-变量dashboardhtml-顶部-style-必备) 为权威来源，本节只列业务页用到的颜色对照。`shared/design-tokens.css` **不写入** `--db-*`，所有大屏变量由 `pc/dashboard.html` 顶部 `<style>` 内联。
+>
+> **强调：每个主题的 `--db-*` 变量块必须三件套齐全**（`--db-accent` / `--db-accent-2` / `--db-accent-warm`），缺一不可。漏掉 `--db-accent-warm` 会导致榜单金银铜 + 折线辅助色 `cv()` 返回空字符串，触发 JS 报错或颜色失效。
+
+---
+
 ## 附录 A：shared/design-tokens.css
 
-以下为完整的 CSS 变量设计令牌文件，**包含三套主题（默认/政企/党建）+ 暗色模式**，运行时通过 `<html data-skin="..." data-theme="dark">` 切换。生成项目时直接写入 `shared/design-tokens.css`：
+以下为完整的 CSS 变量设计令牌文件，包含**三套主题（默认/政企/党建）+ 暗色模式**（仅 App 端）。主题由 `<html data-skin="...">` 在生成时一次性确定，**不提供运行时切换 API**。生成项目时直接写入 `shared/design-tokens.css`：
 
-主题规范、自动识别规则、切换 API 详见 [themes.md](themes.md)。
+> **注意**：
+> - 主题规范、自动识别规则、FOUC 脚本详见 [themes.md](themes.md)。
+> - 暗色 `[data-theme="dark"]` 块**只服务于 App 端页面**；PC 端页面不渲染暗色样式。
+> - **大屏 `--db-*` 变量不在本文件**，统一在 `pc/dashboard.html` 顶部 `<style>` 内联，详见 [dashboard.md §2](dashboard.md#2-三主题-css-变量dashboardhtml-顶部-style-必备)。
 
 ```css
 /* ============================================================
-   设计令牌（design tokens）— 三主题 + 暗色
+   设计令牌（design tokens）— 三主题 + 暗色（仅 App 端）
    ============================================================ */
 
 /* ---- 默认风格 ---- */
@@ -722,7 +726,7 @@ CSS：始终用 `var(--primary)`、`var(--gray-200)` 等变量，不硬编码色
   --accent-gold:#F59E0B;--text-link:#C9302C;--primary-active-bg:rgba(201,48,44,0.12);
 }
 
-/* ---- 暗色模式（与主题正交叠加） ---- */
+/* ---- 暗色模式（仅 App 端 · 与主题正交叠加） ---- */
 [data-theme="dark"] {
   --bg-body:#1A1A1A;--bg-white:#262626;--bg-card:#262626;--bg-hover:#333333;--bg-active:#3D3D3D;
   --text-primary:#E5E5E5;--text-secondary:#999999;--text-tertiary:#707070;--text-disabled:#555555;
@@ -769,6 +773,9 @@ a:hover { color: var(--primary-hover); }
 }
 .header-navbar .header-logo { font-size: var(--font-size-lg); font-weight: 600; color: var(--header-text); display: flex; align-items: center; gap: var(--space-sm); white-space: nowrap; }
 .header-navbar .header-logo i { font-size: 1.3rem; color: var(--primary); }
+/* PC header 左侧包裹层：LOGO 与汉堡按钮必须同处一个直接子元素（.header-left 或 .d-flex 容器），二者并排显示在 header 最左侧；header 直接子元素只能是「左侧包裹层」+「.header-right」，禁止把 LOGO / 汉堡按钮拆成两个独立子元素 */
+.header-navbar > .header-left,
+.header-navbar > .d-flex { display: flex; align-items: center; gap: var(--space-sm); flex-shrink: 0; }
 .header-navbar .header-right { display: flex; align-items: center; gap: var(--space-md); }
 .header-navbar .env-badge { font-size: var(--font-size-xs); padding: 2px 8px; border-radius: var(--radius-full); background: var(--success-light); color: var(--success); font-weight: 500; }
 .header-navbar .header-notification { color: var(--header-text); cursor: pointer; font-size: 1.15rem; position: relative; padding: 6px; border-radius: var(--radius-sm); }
@@ -996,11 +1003,40 @@ function confirmModal(title, body, onConfirm) {
   bsModal.show();
 }
 
+/* 分页与筛选统一以 .d-none 控制显隐，禁止混用 style.display（避免筛选状态与分页状态错位） */
 var currentPage = 1, pageSize = 10, totalItems = 0;
+
+/** 收集当前可见行（未被筛选掉） */
+function getVisibleRows() { return document.querySelectorAll('#dataTable tbody tr:not(.d-none)'); }
+
+/** 给一行打 / 取消分页隐藏（仅作用于"已可见"的行） */
+function setRowPaged(row, paged) {
+  if (paged) row.classList.add('d-none'); else row.classList.remove('d-none');
+  row.style.display = '';   // 清理历史残留的内联 display
+}
+
 function initPagination(size) { pageSize = size || 10; currentPage = 1; renderPage(); }
-function changePageSize(size) { pageSize = parseInt(size); currentPage = 1; renderPage(); }
-function goPage(p) { var visibleRows = document.querySelectorAll('#dataTable tbody tr:not(.d-none)'); if (!visibleRows.length) { currentPage = p; renderPage(); return; } totalItems = visibleRows.length; var totalPages = Math.ceil(totalItems / pageSize); if (p < 1 || p > totalPages) return; currentPage = p; visibleRows.forEach(function(row, i) { row.style.display = (i >= (currentPage - 1) * pageSize && i < currentPage * pageSize) ? '' : 'none'; }); updatePaginationUI(totalPages); }
-function renderPage() { var rows = document.querySelectorAll('#dataTable tbody tr:not(.d-none)'); totalItems = rows.length; var totalPages = totalItems === 0 ? 1 : Math.ceil(totalItems / pageSize); if (currentPage > totalPages) currentPage = totalPages; rows.forEach(function(row, i) { row.style.display = (i >= (currentPage - 1) * pageSize && i < currentPage * pageSize) ? '' : 'none'; }); updatePaginationUI(totalPages); }
+function changePageSize(size) { pageSize = parseInt(size) || 10; currentPage = 1; renderPage(); }
+
+function goPage(p) {
+  var visibleRows = getVisibleRows();
+  totalItems = visibleRows.length;
+  var totalPages = totalItems === 0 ? 1 : Math.ceil(totalItems / pageSize);
+  if (p < 1 || p > totalPages) return;
+  currentPage = p;
+  renderPage();
+}
+
+function renderPage() {
+  var visibleRows = getVisibleRows();
+  totalItems = visibleRows.length;
+  var totalPages = totalItems === 0 ? 1 : Math.ceil(totalItems / pageSize);
+  if (currentPage > totalPages) currentPage = totalPages;
+  var start = (currentPage - 1) * pageSize, end = currentPage * pageSize;
+  visibleRows.forEach(function(row, i) { setRowPaged(row, i < start || i >= end); });
+  updatePaginationUI(totalPages);
+}
+
 function updatePaginationUI(totalPages) {
   var infoEl = document.querySelector('.page-info');
   if (infoEl) infoEl.textContent = '共 ' + totalItems + ' 条，第 ' + currentPage + '/' + Math.max(totalPages, 1) + ' 页';
@@ -1018,15 +1054,21 @@ function sortTable(th, colIndex) {
   var dir = sortDirection;
   rows.sort(function(a, b) { var av = a.cells[colIndex].textContent.trim(), bv = b.cells[colIndex].textContent.trim(); return av.localeCompare(bv, 'zh-CN') * dir; });
   rows.forEach(function(row) { tbody.appendChild(row); });
-  sortDirection *= -1; renderPage();
+  sortDirection *= -1;
+  renderPage();
 }
 
 function clearAllFilters() {
   document.querySelectorAll('input[type="text"]:not([readonly]), input[type="date"], select').forEach(function(el) {
     if (el.tagName === 'SELECT') el.selectedIndex = 0; else el.value = '';
   });
-  document.querySelectorAll('#dataTable tbody tr').forEach(function(tr) { tr.classList.remove('d-none'); tr.style.display = ''; });
-  currentPage = 1; showState('page-content', 'normal'); renderPage();
+  document.querySelectorAll('#dataTable tbody tr').forEach(function(tr) {
+    tr.classList.remove('d-none');
+    tr.style.display = '';
+  });
+  currentPage = 1;
+  showState('page-content', 'normal');
+  renderPage();
 }
 
 function toggleTheme() {
@@ -1047,6 +1089,54 @@ function closeSidebar() {
 
 function formatDate(d) { if (!d) return ''; var dt = new Date(d); return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0'); }
 function formatMoney(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+
+/* ============================================================
+   地址 → 地图（PC + App 通用 · 天地图方案）
+   完整实现以 [references/tianditu-map.md](tianditu-map.md) 为权威
+   本节只导出 PC 业务页调用的入口 openMapTabInFrame（其余函数在 tianditu-map.md 附录给出）
+   ============================================================ */
+
+// 通知父页面在同一 iframe 内打开地图页（PC 框架必须已实现 openMapTab 全局函数）
+function openMapTabInFrame(opts) {
+  if (window.parent && typeof window.parent.openMapTab === 'function') {
+    var title = (opts && opts.title) || '地图';
+    var qs = [];
+    if (typeof opts.lng === 'number') qs.push('lng=' + opts.lng);
+    if (typeof opts.lat === 'number') qs.push('lat=' + opts.lat);
+    if (opts.address) qs.push('address=' + encodeURIComponent(opts.address));
+    if (opts.name) qs.push('name=' + encodeURIComponent(opts.name));
+    qs.push('title=' + encodeURIComponent(title));
+    window.parent.openMapTab('map.html?' + qs.join('&'), title);
+  } else {
+    showToast('PC 框架未定义 openMapTab，无法打开地图', 'warning');
+  }
+}
+
+// 识别字段名 / 值是否是地点字段
+function isAddressField(fieldName, value) {
+  if (!value) return false;
+  var nameKey = /^(address|location|addr|地址|位置|地点|场所|站点|园区|门店|仓库|工地|项目地|坐标|经纬度|lng|lat|lon|long)/i;
+  var valKey = /(省|市|区|县|镇|路|街|道|巷|弄|号|栋|楼|座|园|区|站|厂|店|中心)/;
+  if (nameKey.test(fieldName)) return true;
+  if (valKey.test(String(value))) return true;
+  return false;
+}
+
+// 从值里提取经纬度
+function extractLngLat(value) {
+  if (!value) return null;
+  var s = String(value).trim();
+  var m = s.match(/(-?\d{1,3}\.\d{1,8})\s*[,\s]\s*(-?\d{1,3}\.\d{1,8})/);
+  if (m) return { lng: parseFloat(m[1]), lat: parseFloat(m[2]) };
+  return null;
+}
+
+// 以下函数由生成项目时按 [tianditu-map.md](tianditu-map.md) 附录 A 在 shared/components.js 顶部补全：
+//   - TIANDITU_KEY（**从 [config.md](config.md) 读取**并直接写入，不要保留占位符）
+//   - loadTianDiTu()
+//   - initTianDiMap(opts)
+//   - openInAMap()（兼容旧业务页调用，可走天地图 uri scheme）
+// 旧版 renderAddressMap() / buildMapEmbedUrl() / 高德 m.amap.com 公开页 URL 全部废弃。
 ```
 
 ## 附录 D：app/assets/app.css
@@ -1255,3 +1345,7 @@ body.phone-frame-body {
 [data-theme="dark"] .phone-tabbar { border-top-color: rgba(255,255,255,0.06); }
 [data-theme="dark"] .phone-tabbar .badge-dot { border-color: #1a1a1a; }
 ```
+
+
+
+

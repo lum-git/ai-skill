@@ -35,6 +35,7 @@
 | 05 | 列表 | 图文列表（news-card）+ 数据表格（含表头、操作列） |
 | 06 | PC 框架 | 真实 `header-navbar` + `sidebar` + `main-layout` 布局演示，支持折叠 |
 | 07 | App 移动端 | 真实 `phone-frame` 手机模型（状态栏/导航栏/内容区/底部 Tab） |
+| 08 | PC 数据大屏（可选） | 当项目含 `pc/dashboard.html` 时追加；展示三栏暗色驾驶舱布局 + 地图占位 + KPI 卡片样式 |
 
 ## 页面结构
 
@@ -48,6 +49,28 @@
 - 内联脚本必须包含：`showToast`、`toggleSidebar`（localStorage 记忆折叠状态）、`closeSidebar`、折叠状态初始化自执行函数。
 - 在根 `index.html` 第 4 卡片注册入口（`href="styleguide.html"`）；PC 侧边栏不放"风格总览"菜单。
 - 暗色变量仅作为 CSS 定义存在，页面不执行暗色模式切换。
+
+## 08 区块：PC 数据大屏（仅含 dashboard.html 的项目）
+
+**触发条件**：仅当项目包含 `pc/dashboard.html` 时追加；不含则跳过。
+
+**包含内容**（自包含样式，复刻同主题 dashboard.html 的视觉，但用占位元素不接 ECharts）：
+
+| 子区块 | 说明 |
+|--------|------|
+| 暗色背景渐变 | `linear-gradient(180deg, var(--db-bg-from), var(--db-bg-to))` 整块铺设 |
+| 标题区 | 28px 金红渐变文字 + 实时时间占位（不真跑 setInterval） |
+| 三栏布局 | 320px / 1fr / 320px grid，左 KPI+榜单 / 中地图占位 / 右进度+待办 |
+| KPI 卡片 4 个 | 2×2 网格，金色大数字 + 浅灰小标签 |
+| 地图占位 | 用虚线边框 + 主题色文字"地图区域"代替真地图（避免外网请求） |
+| 排行榜 5 行 | 序号 + 名称 + 进度条 + 数值 |
+| 主题强条示例 | `--accent-gold` / `--primary` 在面板边框、标题、地图高亮的应用 |
+
+**生成要点**：
+- 自包含内联样式，不引用 `shared/dashboard.css`
+- 地图区域**不接 ECharts**（避免外网请求），用静态占位
+- 实时时间**不跑 setInterval**（写死一个时间字符串"2026-08-22 14:30:25"）
+- 暗色规则同 [themes.md 第八章](themes.md#八pc-数据大屏暗色规则)
 
 ## 参考实现
 

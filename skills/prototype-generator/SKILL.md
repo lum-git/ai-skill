@@ -15,8 +15,69 @@ description: "从零生成完整原型HTML项目（PC管理端 + App移动端 + 
 2. **新增功能模块**：在已有项目中按规范新增页面，并自动更新框架注册
 3. **双端覆盖**：PC 管理端（iframe SPA）+ App 移动端（手机模型框架）+ 登录页
 4. **风格总览页**：从零生成项目时，按 [references/styleguide.md](references/styleguide.md) 规范生成 `styleguide.html`
+5. **PC 数据大屏（必备 · 驾驶舱形态）**：每个项目**必须**生成 `pc/dashboard.html` 并注册为侧边栏独立菜单。**大屏 = PC 后台内嵌驾驶舱**（DataV / 京东 / 阿里云风格），**不是 BI 报表页**——单屏不滚动、超大字 KPI、告警闪烁、事件流实时滚动、可派单交互。
+
+> **结构（按业务自主判断，无固定模板）**：
+>
+> **驾驶舱没有唯一正确的模板**。业务不同（物流调度 / 销售监控 / 运维态势 / 党建风采 / 应急指挥），核心模块、视觉重心、信息密度都不一样。本规范只沉淀**通用骨架 + 典型范式参考**，具体由 AI 按需求自主判断。
+>
+> 通用骨架（所有驾驶舱共享）：
+> 1. **单屏 fit**：`html, body { height: 100%; overflow: hidden }`，1920×900 iframe
+> 2. **顶层 CSS Grid 分配高度**（行数和行高按业务定），禁止每段独立 height 后让 overflow 裁掉
+> 3. **ECharts 必用 `ResizeObserver`** 监听容器尺寸（容器在 flex/grid 中高度变化时图表才能跟上）
+> 4. **CSS 变量驱动主题色**：所有强调色走 `var(--db-*)`，ECharts 用 `getComputedStyle` 读变量
+>
+> 三大典型范式（参考，不强制）：
+> - **A 地图主导型**：物流调度 / 区域监控 / 应急指挥 → 顶栏 + KPI + 左分析/中央地图/右监控 + 状态栏
+> - **B 数据洞察型**：经营分析 / 销售 / 财务 → 顶栏 + KPI + 大趋势图 + 榜单/饼图
+> - **C 综合指挥型**：智慧城市 / 综合态势 → 顶栏 + 告警条 + KPI + 含地图的多列布局
+>
+> 地图决策（**有强制规则，必须遵守**）：
+> - ✅ **加地图（硬规则）**：需求文档中出现**省/市/区/县名**（如"广东省""广州市""天河区"）+ 数据能匹配行政区划 → **必须加地图**，不允许用条形图/饼图替代
+> - ✅ 加地图（一般）：业务涉及地域 / 路径 / 位置 / 区域对比
+> - ❌ 不加地图：纯财务 / 库存 / 系统监控；数据维度是"学院/专业/产品/部门/库存 SKU"等**完全非行政的纯业务维度**（DataV 没有这种地图）
+> - ⚠️ **关键区分**："高校分布""校区数据"等看起来像非行政维度，但归属在行政区划内（如 21 地市内高校、某市内校区），**视为行政维度的下级**，应加地图展示地域分布；只在地图上以散点/标签标注具体高校即可，不要因"高校"二字否决地图
+> - 地图级别：**按关键词匹配任意一级**（全国→100000 / 省→320000 / **市→320100，最小可到市级**），不要硬性写死"默认国家级"
+> - 初始层级由业务决定（全国 / 省 / 市），最小只能到市级（区县数据量过大、视觉碎片化，不建议作初始层级）
+>
+> **完整骨架 / 组件样式 / 地图组件 / 经验沉淀 见 [references/dashboard.md](references/dashboard.md)**，尤其要读"§1 设计原则（按业务自主判断）"。
+>
+> **视觉风格由主题决定**（不在大屏里硬编码）：
+> - 颜色：所有强调色走 CSS 变量 `--db-accent` 等，**禁止**直接写 `#4DD0E1` 等色值
+> - 字体大小、密度、是否带 3D 效果由项目主题和业务决定（default 偏科技蓝、gov 偏庄重藏蓝、party 偏红色党旗风）
+> - 数字动效（递增动画、滚动事件流）作为**通用能力**提供，但具体是否使用由业务场景决定
+
+> **大屏强调色强制规则（避免深底不可见）**：`default` 主题的 `--accent-gold` 是 `transparent`，直接用作大屏数字/标题色时**完全不可见**。`pc/dashboard.html` **必须**在页面顶部 `<style>` 内重新定义大屏专用强调色变量（覆盖 design-tokens），三套主题各自有值：
+> - `--db-accent` / `--db-accent-2` / `--db-accent-warm` — KPI 数字/标题强调色 + 辅助渐变色 + 金银铜奖牌色
+> - `--db-text` / `--db-text-dim` — 大屏正文/次要文字色（深底固定浅灰）
+> - `--db-bar-bg` — 进度条底色
+> - `--db-good` / `--db-warn` / `--db-bad` — 告警三态色
+> - `--db-glow` — Logo/告警发光阴影
+>
+> 大屏所有强调元素一律用 `var(--db-accent)`；ECharts 文字色通过 `getComputedStyle` 读 CSS 变量传入（详见 [dashboard.md 5 / 7](references/dashboard.md)）。
+
+> **地图级别匹配（仅在"已决定加地图"时使用）**：
+> | 业务关键词 | 地图级别 | adcode 格式 | 作初始层级？ |
+> |---|---|---|---|
+> | 含"全国/省际/全国物流/全国态势" | 国家级 | 100000 | ✅ 推荐 |
+> | 明确省名（如"广西/江苏省内"） | 省级 | 6 位（省码+0000） | ✅ 推荐 |
+> | 明确市名（如"南宁市内"） | 市级 | 6 位（省码+市码） | ✅ 推荐（最小可到这一级） |
+> | 明确区/县/校名 | 区县级 | 6 位 | ❌ 不推荐（数据碎片化，仅作下钻终点） |
+>
+> **关键原则**：
+> - **初始层级 = 业务决定**，可任意选 全国/省/市 一级（**最小到市级**）
+> - 国家级 100000 作初始时，可下钻到 省/市/区县
+> - 省级作初始时，可下钻到 市/区县（**不能**向上"回到全国"，除非显式提供「返回全国」入口）
+> - 市级作初始时，可下钻到 区/县（**不能**向上回到省/全国）
+> - "当前层级"标识 = `breadcrumbStack[breadcrumbStack.length - 1].name`，**不是固定常量**
+>
+> 这个表**只解决"加地图时用哪一级"**，不解决"是否要加地图"。完整 adcode 速查、URL 模板、ECharts 视觉参数详见 [dashboard.md 6 节](references/dashboard.md#6-地图组件echarts--datav-geojson)。
 
 > **模板代码详见**：[references/examples.md](references/examples.md)，包含 PC 端页面模板、App 端页面模板、登录页/框架页/入口页模板、代码风格范例、附录（CSS/JS 共享资源完整代码）。
+>
+> **地址 → 地图增强**：当数据模型里有地点字段（地址/经纬度等），PC 详情弹窗内嵌折叠地图面板，App 详情页内嵌小地图卡片 + 唤起原生地图 App。详见 [references/tianditu-map.md](references/tianditu-map.md)。
+>
+> **天地图 Key 处理（强制）**：生成项目时**必须**从 [references/config.md](references/config.md) 的 `TIANDITU_KEY` 字段读取 Key，直接写入 `shared/components.js` 顶部的 `var TIANDITU_KEY = '…';`（**不要保留 `YOUR_TIANDITU_KEY` 占位符**）。Key 需要更新时,只改 `config.md` 这一处即可同步到所有原型项目。
 
 ---
 
@@ -33,6 +94,7 @@ project/
 ├── pc/                            # PC 管理端
 │   ├── index.html                 # 框架页：Header + Sidebar + iframe
 │   ├── index-content.html         # 首页工作台（iframe 默认加载）
+│   ├── dashboard.html             # PC 数据大屏（必备，暗色驾驶舱；布局按需求动态生成）
 │   └── *.html                     # 各业务页面
 ├── app/                           # App 移动端
 │   ├── index.html                 # 首页（固定第一个 Tab，含底部 Tab Bar + 角色切换）
@@ -91,6 +153,11 @@ project/
 - **每个模块需要哪些页面**（PC 列表/详情/表单，App 列表/详情/表单）
 
 输出页面清单供用户确认。
+
+**地点字段识别（贯穿后续生成，不依赖用户提示）**：
+- 扫描数据字段名，命中 `address / location / 地址 / 位置 / 坐标 / 经纬度 / lng / lat / 地点 / 场所 / 站点 / 园区 / 门店 / 仓库 / 工地 / 项目地` 等关键词 → 标记为「地点字段」
+- 也扫描字段值，命中 `省/市/区/县/路/街/号/栋/楼` 等中文地名词 → 同样标记
+- 一旦标记，PC 详情弹窗与 App 详情子页**自动**接入地图组件（[references/tianditu-map.md](references/tianditu-map.md)）
 
 ### 第 2 步：创建目录结构
 
@@ -229,11 +296,11 @@ PC 端**所有可交互按钮**（含操作列、筛选栏、表单、弹窗、�
 ### 3.4 PC 端导航
 
 - **弹窗模式（推荐）**：`new bootstrap.Modal(document.getElementById('detailModal')).show()`
-- **页面跳转（PC 框架内）**：菜单 `<a>` 必须是 `class="sidebar-nav-link"` + `href="xxx.html"` + `data-url="xxx.html"` 三件套。**不要写** `target="mainFrame"`（iframe sandbox 下失效）。点击时由框架脚本调用 `loadPage(url)` 同步 `.active` 与 iframe 加载，业务页面**无需**自写跳转函数。
+- **页面跳转（PC 框架内）**：菜单 `<a>` 必须是 `class="sidebar-nav-link"` + `href="xxx.html"` + `data-url="xxx.html"` 三件套。**不要写** `target="mainFrame"`（iframe sandbox 下失效）。框架为单 iframe 机制（无多页签栏）：菜单点击、业务页跳转（详情 Modal「在地图中查看」、顶栏通知等）统一用 `parent.loadPage('xxx.html')` 直接切换 iframe，切换后侧边栏高亮自动同步。
 - **面包屑跳转**：PC 内容页用 `<a href="xx.html" onclick="parent.loadPage('xx.html')">` 跳转，**不要**用 `target="mainFrame"`。
 - **确认操作**：`confirmModal('标题', '内容', callback)`（业务页需自带 `#confirmModal` 节点，见 examples.md 1.7）
 
-> PC 框架页定义 `window.loadPage = function(url){...}` 全局函数。详见 [examples.md 第五章](references/examples.md#五pc-端框架页-pcindexhtml)。
+> PC 框架页定义 `window.loadPage = function(url){...}` 与 `window.openMapTab = function(url, title){...}`（地图场景兼容入口，内部即 `loadPage`）全局函数。详见 [examples.md 第五章](references/examples.md#五pc-端框架页-pcindexhtml)。
 
 ### 3.5 六态
 
@@ -322,10 +389,11 @@ App 底部导航 Tab 规则：
 
 PC 框架页完整模板及 Sidebar 菜单格式参见 [examples.md 五 PC 框架页](references/examples.md#五pc-端框架页-pcindexhtml)。
 
-**PC 框架页 header 结构：** header 内部左侧必须是 `d-flex align-items-center gap-2` 包裹层（**不是** `header-left`），依次包含 LOGO 和汉堡按钮，结构如下：
+**PC 框架页 header 结构：** header 内部左侧必须是 `d-flex align-items-center gap-2` 包裹层（**不是** `header-left`，但 CSS 同时兼容 `.header-left` 类名），依次包含 LOGO 和汉堡按钮，结构如下：
 
 ```html
 <header class="header-navbar">
+  <!-- 关键：LOGO 与汉堡按钮必须同处一个直接子元素内，二者并排显示在 header 最左侧；header 直接子元素只能是「左侧包裹层」+「.header-right」两个，禁止把 LOGO / 汉堡按钮拆成两个独立子元素，否则会被 space-between 挤到中间位置 -->
   <div class="d-flex align-items-center gap-2">
     <div class="header-logo"><i class="bi bi-xxx"></i> [系统名称]</div>
     <button class="navbar-toggler-responsive" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
@@ -371,6 +439,7 @@ PC 框架页完整模板及 Sidebar 菜单格式参见 [examples.md 五 PC 框�
 - [ ] App 页面使用 `phone-frame-body` + `phone-frame` 手机框架结构（无黑边框）
 - [ ] App 页面 `.phone-content` 承载内容，状态栏 + 导航栏 + 底部Tab 均在 phone-content 外部
 - [ ] PC 页面使用 `#page-content` 包裹层
+- [ ] **PC 框架页 header 子元素结构**：`header.header-navbar` 直接子元素只能是「左侧包裹层（`.header-left` 或 `.d-flex`，内含 LOGO + 汉堡按钮 `navbar-toggler-responsive`）+ `.header-right`」两个，**禁止**把 LOGO 和按钮拆成两个独立直接子元素（会被 `justify-content: space-between` 挤到中间）
 - [ ] `body class="bg-light"`（App 加 `phone-frame-body`）
 - [ ] 六态全部包含（正常/空数据/筛选空/加载中/错误/网络错误）
 - [ ] App Tab 页有 `.phone-tabbar`，非 Tab 页有返回箭头 `.nav-back`
@@ -386,8 +455,35 @@ PC 框架页完整模板及 Sidebar 菜单格式参见 [examples.md 五 PC 框�
 - [ ] 所有颜色用 CSS 变量（主题色 `var(--primary)`，默认 `#3370FF`，政企 `#1E3A8A`，党建 `#C9302C`）
 - [ ] 带分页的列表：数据量 11~20 条、`initPagination(10)`、分页栏含页面大小选择器(10/30/50/100)+上一页/下一页按钮+`page-btn` class、`.page-info` 用 `<span>`
 - [ ] **表格列数一致**：`<thead>` 中的 `<th>` 数量与 `<tbody>` 中每行 `<td>` 数量严格一致，tbody 根据业务需求增加的列，thead 必须对应添加标题列
+- [ ] **地址 → 地图（仅当数据含地点字段时）**：PC 详情弹窗嵌入折叠地图面板（`address-map-container` + `renderAddressMap`），App 详情子页嵌入小地图卡片（`address-map-card` 180px 高 + `openInAMap` 唤起原生）；iframe 加载失败有兜底外链；高德公开页 URL，无需 Key
+- [ ] **天地图 Key 已写入**：`shared/components.js` 顶部 `TIANDITU_KEY` **必须**已替换为 [references/config.md](references/config.md) 中的真实值,不允许保留 `YOUR_TIANDITU_KEY` 占位符
 - [ ] 中文文本（标签、提示、占位符）
 - [ ] App 状态栏统一格式：时间 9:41 + 信号/电池图标
+- [ ] **PC 数据大屏通用骨架自检（dashboard.html）**：见 [dashboard.md §5 经验沉淀](references/dashboard.md#5-经验沉淀踩过的坑--作为参考不是规定)，**通用规则**：① 总高 `100vh; overflow: hidden`；② ECharts 用 `ResizeObserver` 监听容器；③ CSS 变量驱动主题色；④ 顶层 CSS Grid 分配高度（不用每段独立 height）；⑤ 不引用 `shared/components.css`（避免浅色卡片污染）；⑥ 加地图时遵循 [§4 地图组件](references/dashboard.md#4-地图组件仅在-13-决定加地图时使用)
+
+### PC 数据大屏自检要点（实战必看）
+
+- [ ] **Grid/Flex 容器三件套（强制 · 避免图表不可见）**：① 每个 `.db-panel` 必须有 `display:flex; flex-direction:column; min-height:0`；② 每个图表 div 必须有 `min-height` 兜底（220px / 460px）；③ iframe 内嵌时父窗口 resize 后子页面要主动 `chart.resize()`。详见 [dashboard.md §0.3](references/dashboard.md#03-echarts-自适应模板所有图表通用)「Grid/Flex 容器三件套」。**违反此条 = 图表容器高度为 0 = ECharts 渲染失败但 canvas 已存在，看似没内容**
+- [ ] **ECharts 工厂加调试日志**：工厂入口打 `console.log('[Chart] init xxx: WxH')`，便于排查布局问题
+- [ ] **地图占满空余地方**：主区 grid `260px 1fr 260px`（左右业务列不超过 280px）；KPI 砍到 4 个、行高 88px；总 padding 8×12
+- [ ] **地图四象限 UI 元素位置（必须严格遵守，不允许合并堆叠）**：
+  - **左下**：返回上级按钮（`.db-map-back` 单独按钮，初始 `disabled`）
+  - **左上**：工具栏（刷新按钮，可放其他次要按钮）
+  - **右上**：面包屑（`.db-map-breadcrumb`，点击任意级跳回）
+  - **右下**：悬浮统计 pill（`.db-map-stats`，订单/车辆/司机汇总）
+  - **禁止**：把"返回按钮 + 刷新按钮"合并到一个左上/右上容器；禁止把面包屑放左上；禁止把悬浮统计放左下（与返回按钮冲突）
+- [ ] **地图交互按钮可点击**：返回按钮、刷新按钮、面包屑项必须加 `pointer-events: auto`，否则会被 canvas + loading 蒙层拦截
+- [ ] **地图 label 防撞色三件套（强制）**：默认 label 必须有 `textBorderColor` + `textBorderWidth`（建议加 `textShadow` 双保险）；emphasis/select 用 `#fff` + 更深更粗的描边。否则浅色字糊在主题色透明底上，地名看不清。详见 [dashboard.md §4](references/dashboard.md#4-地图组件仅在-13-决定加地图时使用)「地图 label 颜色防撞色三件套」
+- [ ] **地图容器兜底**：`.db-map { width:100%; height:100%; min-height: 420px }`；init 时若 `clientHeight===0` 强制 min-height；`setTimeout(resize, 200)` 延迟双保险
+- [ ] **地图暗夜配色**：边框 `rgba(accent, 0.45)` 半透明；emphasis 边框用 `accent`；**visualMap 配色用 `[rgba(accent, 0.06), rgba(accent, 0.5)]` 二段低透明，禁止 `barBg→accent→accent2` 三段渐变**
+- [ ] **散点 value 结构**：scatter `{ name, value: [lng, lat, bizValue] }` 三元素；`symbolSize: val[2]` 取业务值
+- [ ] **异常处理**：render 包独立 try/catch 区分"加载失败 vs 渲染异常"；catch 文案带 `err.message`；暴露 `window.__dbgMap = { el, chart }` 与 `console.log` 日志
+- [ ] **网络容错**：多 CDN 顺序尝试；国家级内置矩形 GeoJSON 兜底（`buildFallbackCountryGeo()`）；下钻层级失败自动退回国家级 + Toast
+- [ ] **错误三态文案分离**：① loading spinner + "加载 xxx 地图..."；② 错误态显示 `err.message` + "重新加载"按钮；③ demo 模式顶部横幅 "⚠ 当前为演示数据"
+- [ ] **KPI 数字递增**：保留 `.unit` 子节点，只替换数字文本；用 `data-prefix`/`data-suffix`/`data-decimals` 三个 dataset 属性驱动；`toLocaleString('zh-CN')` 格式化
+- [ ] **ECharts 工厂必须用 `theme.xxx`**：`autoResizeChart(id, factory)` / `autoResizeMap(id, factory)` 的工厂签名统一为 `function(chart, theme)`，所有 `--db-*` 颜色通过 `theme.accent` / `theme.accent2` / `theme.accentWarm` / `theme.text` 等读取；**禁止在工厂内 `var xxx = cv('--db-xxx')` 自行声明**（复制粘贴极易遗漏 → 触发 `xxx is not defined at autoResizeChart`，典型 `accentW`）。详见 [dashboard.md §0.3](references/dashboard.md#03-echarts-自适应模板所有图表通用)
+- [ ] **visualMap.max 容错**：`if (!isFinite(max) || max <= 0) max = 1` 避免 0 值告警
+- [ ] **初始层级变量化**：业务决定 `ROOT_ADCODE`（全国/省/市，最小到市级），不要硬编码 100000；HTML「当前层级」初值 = `ROOT_NAME`；兜底回退 = `loadLevel(ROOT_ADCODE, ROOT_NAME)`；返回按钮初始 disabled（栈底就是 ROOT）
 
 ---
 
