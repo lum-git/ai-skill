@@ -378,12 +378,14 @@ def deploy_sync(host: str, port: int, user: str, password: str,
             ssh_remove_file(ssh, rf)
 
         # 全量上传（tar pipe 一次性搞定所有文件）
+        # 注意：目录已被 rm -rf 清空，必须上传"所有本地文件"，
+        # 而非仅 to_upload，否则未修改的文件会在服务器上丢失。
         if to_upload:
-            print(f"\n正在通过 tar+SSH pipe 传输 {len(to_upload)} 个文件...")
+            print(f"\n正在通过 tar+SSH pipe 传输 {len(local_files)} 个文件...")
             # 先删除旧内容（等同于 --delete）
             ssh_exec(ssh, f"rm -rf '{remote_root}'/*")
             ssh_exec(ssh, f"mkdir -p '{remote_root}'")
-            ssh_tar_upload(ssh, to_upload, local_root, remote_root)
+            ssh_tar_upload(ssh, local_files, local_root, remote_root)
 
     # 汇总
     total_up = sum(f[2] for f in to_upload)
