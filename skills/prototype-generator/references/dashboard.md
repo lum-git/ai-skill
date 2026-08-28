@@ -232,7 +232,7 @@ autoResizeChart('chartOrderType', function(chart, theme){
 
 **❌ 不加地图**：
 - 纯财务 / 库存 / 系统监控等无空间属性业务
-- 数据维度是"学院/专业/产品/部门/库存 SKU/客户分群"等**完全非行政的纯业务维度**（DataV 没有这种地图） → 改用柱状/饼图/雷达
+- 数据维度是"学院/专业/产品/部门/库存 SKU/客户分群"等**完全非行政的纯业务维度**（行政区划地图没有这种维度） → 改用柱状/饼图/雷达
 
 **⚠️ 关键区分（曾踩过的坑）**：
 - "高校分布""校区数据""门店分布"等看似非行政维度，但**归属在行政区划内**（如 21 地市内高校、某市内校区/门店）→ **视为行政维度的下级**，**必须加地图**
@@ -254,26 +254,27 @@ autoResizeChart('chartOrderType', function(chart, theme){
 ## 2. 三主题 CSS 变量（dashboard.html 顶部 `<style>` 必备）
 
 ```css
+/* default = 品牌蓝系（与项目主题 default #3370FF 同族，大屏深底用亮一档的 #4F8AFF） */
 :root {
-  --db-bg-from: #0a0e1a;
-  --db-bg-to: #0f1729;
-  --db-bg-glow-1: rgba(77, 208, 225, 0.18);
-  --db-bg-glow-2: rgba(125, 249, 255, 0.10);
-  --db-card-from: rgba(20, 30, 50, 0.55);
-  --db-card-to: rgba(15, 23, 41, 0.35);
-  --db-card-edge: rgba(77, 208, 225, 0.25);
-  --db-border: rgba(77, 208, 225, 0.18);
-  --db-accent: #4DD0E1;
-  --db-accent-2: #7DF9FF;
-  --db-accent-warm: #FFD700;
-  --db-text: #E5E7EB;
-  --db-text-dim: #9CA3AF;
-  --db-text-mute: #6B7280;
-  --db-good: #00B578;
-  --db-warn: #FF7D00;
-  --db-bad: #F53F3F;
-  --db-glow: rgba(77, 208, 225, 0.5);
-  --db-bar-bg: rgba(77, 208, 225, 0.1);
+  --db-bg-from: #08152E;
+  --db-bg-to: #10274E;
+  --db-bg-glow-1: rgba(30, 58, 138, 0.32);
+  --db-bg-glow-2: rgba(184, 134, 11, 0.12);
+  --db-card-from: rgba(15, 30, 61, 0.55);
+  --db-card-to: rgba(15, 30, 61, 0.35);
+  --db-card-edge: rgba(79, 138, 255, 0.45);
+  --db-border: rgba(79, 138, 255, 0.18);
+  --db-accent: #4F8AFF;
+  --db-accent-2: #B8860B;
+  --db-accent-warm: #EF4444;
+  --db-text: #E1EBFF;
+  --db-text-dim: #94A3B8;
+  --db-text-mute: #64748B;
+  --db-good: #10B981;
+  --db-warn: #F59E0B;
+  --db-bad: #EF4444;
+  --db-glow: rgba(79, 138, 255, 0.35);
+  --db-bar-bg: rgba(79, 138, 255, 0.15);
 }
 [data-skin="gov"] {
   --db-bg-from: #0a0f1f; --db-bg-to: #0f1a35;
@@ -374,15 +375,12 @@ autoResizeChart('chartOrderType', function(chart, theme){
 .db-map-wrap {
   flex: 1; min-height: 0; position: relative;
   border-radius: 4px; overflow: hidden;
-  background: radial-gradient(ellipse at center, rgba(77,208,225,0.06) 0%, transparent 70%);
+  background: radial-gradient(ellipse at center, rgba(79,138,255,0.08) 0%, rgba(15,30,61,0.04) 70%);
 }
-.db-map { width: 100%; height: 100%; }
-/* 地图四象限 UI 元素（与上面 UI 元素清单一一对应） */
+/* .db-map 与 #mapLoading 的完整定义见 §3.4.1 §C（含 min-height: 480px 兜底），此处不重复定义避免口径分叉 */
+/* 地图三角分区 UI 元素（与 UI 元素清单一一对应；左下不放常驻按钮，返回靠右上面包屑点击） */
 .db-map-toolbar    { position:absolute; top:10px; left:10px;  z-index:5; display:flex; gap:6px; }
 .db-map-breadcrumb { position:absolute; top:10px; right:10px; z-index:5; display:flex; gap:4px; max-width:60%; justify-content:flex-end; }
-.db-map-back       { position:absolute; bottom:10px; left:10px;  z-index:5; pointer-events:auto;
-                     background:rgba(15,23,41,0.7); border:1px solid var(--db-border); color:var(--db-text);
-                     font-size:12px; padding:5px 12px; border-radius:4px; cursor:pointer; display:flex; align-items:center; gap:4px; }
 .db-map-stats      { position:absolute; bottom:10px; right:10px; z-index:5; display:flex; gap:8px; }
 .db-map-toolbar button,
 .db-map-breadcrumb .crumb { pointer-events:auto; }   /* 防 canvas 拦截 */
@@ -423,30 +421,30 @@ var breadcrumbStack = [{ adcode: ROOT_ADCODE, name: ROOT_NAME }];
 - **初始层级最小只能到市级**（adcode 6 位），不要用区/县级作初始（数据碎片化）
 - 顶栏「当前层级」标识 = `breadcrumbStack[stack.length - 1].name`，**不是固定常量**
 - 下钻失败的兜底回退到 `ROOT_ADCODE`（初始层级），不是固定回退到 100000
-- 「返回按钮」初始为 `disabled`（因为 `breadcrumbStack.length === 1`，根级就是初始层级）
-- **不允许向上回到 ROOT_ADCODE 之上的层级**：省级初始时不能"回到全国"，市级初始时不能"回到省"，除非显式提供「回到 ROOT」入口
+- **返回上级导航 = 右上面包屑点击任意级跳回**（`jumpToCrumb`），不设左下独立返回按钮
+- **不允许向上回到 ROOT_ADCODE 之上的层级**：省级初始时不能"回到全国"，市级初始时不能"回到省"
 
-**兜底 GeoJSON 模板**：根据 `ROOT_ADCODE` 决定画多少个矩形：
-- `100000` → 34 省
-- `450000` → 14 市
-- `450100`（南宁）→ 12 区/县
+**数据源（内置地图数据，不依赖外部 CDN）**
 
-**数据源**
+项目内 `data/map/boundary/` 目录存放本地 GeoJSON 边界文件，`fetch` 直接读取：
 
-| CDN | URL 模板 | 说明 |
-|-----|---------|------|
-| DataV v3（推荐） | `https://geo.datav.aliyun.com/areas_v3/bound/{adcode}_full.json` | 主接口，含子级区划 |
-| DataV v2 兜底 | `https://geo.datav.aliyun.com/areas/bound/{adcode}_full.json` | 旧接口，可作为 fallback |
+| 级别 | 文件路径 | 触发条件 |
+|------|---------|---------|
+| 全国 | `data/map/boundary/china.json` | adcode = `100000` |
+| 省级 | `data/map/boundary/province/{adcode}.json` | 6 位 adcode 末 4 位 `0000` |
+| 市级 | `data/map/boundary/city/{adcode}.json` | 其余 6 位 adcode |
 
-每个 feature 的 `properties` 字段都包含 `adcode` / `name` / `childrenNum`，**直接驱动下钻判断**，无需查表。
+> **来源**：项目内的 `data/map/boundary/` 目录由技能素材库 `references/boundary/` 拷贝而来（`china.json` + `province/` 34 个省级 adcode + `city/` ~300 个市级 adcode）。**生成新项目时按 SKILL.md §2.5 拷贝**，不要从外部 CDN 下载。
+
+每个 feature 的 `properties` 字段包含 `adcode` / `name`（/ `childrenNum` / `level`），**直接驱动下钻判断**，无需查表。
+
+> **页面必须经 HTTP 服务打开**（`fetch` 在 `file://` 协议下会 `Failed to fetch`），本地预览用 `python -m http.server` / `npx serve` / Live Server。
 
 **JS 引擎骨架（生成方法）**
 
 > 这部分告诉**怎么写**，不是给固定数据。所有代码生成时按业务重新生成，**禁止把示例里的硬编码数据抄到业务页**。
 
 **§A 业务配置生成方法**
-
-生成大屏地图时，**声明 5 个变量**——其中 **SUB_REGIONS** 用于兜底时也能渲染完整的下辖地图：
 
 ```js
 // 1) ROOT_ADCODE / ROOT_NAME：按业务可视范围从 §D 表查
@@ -457,149 +455,99 @@ var ROOT_NAME   = '按业务决定';
 // 2) MAP_INDICATOR_LABEL：tooltip 里要展示的指标中文名
 var MAP_INDICATOR_LABEL = '按业务决定';
 
-// 3) BIZ_DATA：业务数据 map。key = GeoJSON properties.name，value = 指标值
+// 3) BIZ_DATA：业务数据 map。key = GeoJSON properties.name（标准行政区名），value = 指标值
+//    key 从本地 boundary 文件读（见 §E），不能自己造名
+//    多指标业务（见 §3.4.3）：额外按 `name__指标key` 造键，如 BIZ_DATA['广东__add30d'] = 18
 var BIZ_DATA = { ... };
 
-// 4) SUB_REGIONS：ROOT_ADCODE 的下辖区划列表（CDN 全挂时绘制完整兜底地图用）
-//    格式：[{a:'下辖adcode', n:'下辖名称'}, ...]
-//    国家级（100000）：引擎内置 34 省级标准列表，无需手写
-//    省级 / 市级：按 §E 方法 fetch 拿到下辖 properties 后，转成 {a, n} 格式填入
-var SUB_REGIONS = [
-  // ROOT_ADCODE = '450000'（广西）示例：
-  // {a:'450100', n:'南宁市'}, {a:'450300', n:'桂林市'}, ...
-];
+// 4) currentMetric：当前展示指标（多指标切换用，默认 'combined'；单指标业务保持默认不改）
+var currentMetric = 'combined';
 ```
 
 **§B 引擎代码（生成时整段写入，按业务填 §A 变量即可）**
 
 > 下面是完整引擎代码，**生成时必须原样照抄到 dashboard.html**，只改 §A 的业务变量。引擎已内化：
-> - **国家级 34 省级标准列表**（ROOT_ADCODE=100000 时无需传 SUB_REGIONS 自动画34 矩形）
-> - 多 CDN 容错 + localStorage 缓存兜底
-> - 矩形坐标按 adcode 稳定派生
+> - **本地 boundary 路径自适应**（自动推断部署前缀，支持 `window.MAP_BASE` 显式覆盖）
+> - **无缓存强制刷新**（`cache: 'no-store'` + 时间戳，刷新按钮名副其实）
+> - **多指标 key 查找**（`currentMetric` 非 `'combined'` 时按 `name__指标key` 取值，见 §3.4.3）
+> - 下钻失败自动回退 `ROOT_ADCODE`
 > - 容器三保险（`min-height` + `ResizeObserver` + `setTimeout`）
-> - 二段低透明 visualMap + 暗底配色
+> - 二段低透明 visualMap + 暗底配色 + label 防撞色三件套
+>
+> **前置**：`var THEME = readTheme();`（§0.3）已声明，引擎内所有 `--db-*` 颜色经 `THEME.xxx` 读取。
 
 ```js
 // ===== 引擎代码（整段照抄，不要重写）=====
 var breadcrumbStack = [{ adcode: ROOT_ADCODE, name: ROOT_NAME }];
 var elMap = document.getElementById('dbMap');
 var elMapLoading = document.getElementById('mapLoading');
-var geoCache = {};
 var mapChart = null;
 
-// 国家级 34 省级标准下辖列表（这是国家标准，所有国家级业务都直接用）
-// 省级 / 市级：生成时按 §E 方法填 SUB_REGIONS
-var NATIONAL_PROVINCES = [
-  {a:'110000', n:'北京市'},           {a:'120000', n:'天津市'},
-  {a:'310000', n:'上海市'},           {a:'500000', n:'重庆市'},
-  {a:'130000', n:'河北省'},           {a:'140000', n:'山西省'},
-  {a:'150000', n:'内蒙古自治区'},     {a:'210000', n:'辽宁省'},
-  {a:'220000', n:'吉林省'},           {a:'230000', n:'黑龙江省'},
-  {a:'320000', n:'江苏省'},           {a:'330000', n:'浙江省'},
-  {a:'340000', n:'安徽省'},           {a:'350000', n:'福建省'},
-  {a:'360000', n:'江西省'},           {a:'370000', n:'山东省'},
-  {a:'410000', n:'河南省'},           {a:'420000', n:'湖北省'},
-  {a:'430000', n:'湖南省'},           {a:'440000', n:'广东省'},
-  {a:'450000', n:'广西壮族自治区'},   {a:'460000', n:'海南省'},
-  {a:'510000', n:'四川省'},           {a:'520000', n:'贵州省'},
-  {a:'530000', n:'云南省'},           {a:'540000', n:'西藏自治区'},
-  {a:'610000', n:'陕西省'},           {a:'620000', n:'甘肃省'},
-  {a:'630000', n:'青海省'},           {a:'640000', n:'宁夏回族自治区'},
-  {a:'650000', n:'新疆维吾尔自治区'}, {a:'710000', n:'台湾省'},
-  {a:'810000', n:'香港特别行政区'},   {a:'820000', n:'澳门特别行政区'}
-];
+// 本地 GeoJSON 路径自适应：按 URL 第一段推断项目前缀，支持 window.MAP_BASE 显式覆盖
+(function(){
+  var p = location.pathname;
+  var m = p.match(/^\/([^/]+)\//);
+  var seg = m && m[1];
+  var reserved = { data:1, shared:1, pc:1, app:1 };
+  window.__MAP_PREFIX = (seg && !reserved[seg]) ? '/' + seg : '';
+})();
+var BOUNDARY_BASE = window.MAP_BASE || (window.__MAP_PREFIX + '/data/map/boundary/');
 
-// 按 ROOT_ADCODE 拿子级 adcode+name 列表（国家级 = 内置 34 省；其他层级 = 用户 SUB_REGIONS）
-function getSubRegions() {
-  if (ROOT_ADCODE === '100000') return NATIONAL_PROVINCES;
-  return SUB_REGIONS || [];
+function getBoundaryPath(adcode) {
+  if (adcode === '100000') return BOUNDARY_BASE + 'china.json';
+  // 省级 adcode (xx0000) → province 目录
+  if (adcode.length === 6 && adcode.slice(2) === '0000') return BOUNDARY_BASE + 'province/' + adcode + '.json';
+  // 市级 adcode → city 目录
+  return BOUNDARY_BASE + 'city/' + adcode + '.json';
 }
 
-// 按 adcode 稳定派生矩形坐标（任何 adcode 都通用，CDN 全挂时用）
-function mockRegionXY(adcode, idx, total) {
-  var s = parseInt(String(adcode).slice(-4), 10) || 1;
-  // 用 idx 让矩形均匀分布；同 adcode 多次调用位置稳定
-  var row = Math.floor((idx || 0) / Math.ceil(Math.sqrt(total || 1)));
-  var col = (idx || 0) % Math.ceil(Math.sqrt(total || 1));
-  var x = 1 + col * 0.9 + (s * 7) % 3 * 0.1;
-  var y = 1 + row * 0.9 + (s * 13) % 3 * 0.1;
-  return { x: x, y: y };
-}
-
-// 把一个矩形（60×40 px）放在 (cx, cy) 中心
-function rectPolygon(cx, cy) {
-  return [[
-    [cx-30, cy-20],[cx+30, cy-20],[cx+30, cy+20],[cx-30, cy+20],[cx-30, cy-20]
-  ]];
-}
-
-// CDN 全挂时构造完整 GeoJSON（用 SUB_REGIONS + 派生矩形）
-function makeFallbackGeo() {
-  var subs = getSubRegions();
-  var total = subs.length || 1;
-  var features = subs.map(function(p, i) {
-    var xy = mockRegionXY(p.a, i, total);
-    var cx = xy.x * 70, cy = xy.y * 60;
-    return {
-      type: 'Feature',
-      properties: { adcode: p.a, name: p.n, childrenNum: 1 },
-      geometry: { type: 'Polygon', coordinates: rectPolygon(cx, cy) }
-    };
+function loadBoundaryGeo(adcode) {
+  return new Promise(function(resolve, reject) {
+    var path = getBoundaryPath(adcode);
+    var bust = (path.indexOf('?') >= 0 ? '&' : '?') + '_=' + Date.now();
+    fetch(path + bust, { cache: 'no-store' })
+      .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(resolve)
+      .catch(reject);
   });
-  // 兜底时顺便缓存到 localStorage，下次直接用真实缓存
-  try { localStorage.setItem('map_' + ROOT_ADCODE, JSON.stringify({type:'FeatureCollection', features: features})); } catch(e){}
-  return { type: 'FeatureCollection', features: features };
 }
 
-// 业务数据 mock（按 GeoJSON features 自动生成）
+// 业务数据 mock（按 GeoJSON features 自动生成；多指标时按 currentMetric 切换取值键）
 function mockBizData(features) {
   return (features || []).map(function(f){
-    var name = f.properties.name || '';
-    var adcode = f.properties.adcode;
-    var base = BIZ_DATA[name];
+    var props = f.properties || {};
+    var name = props.name || '';
+    var adcode = String(props.adcode || props.id || '');
+    var level = props.level || 2;
+    // level 2(省)/3(市) 可下钻，level 4(区县) 不可；兼容 childrenNum 字段
+    var childrenNum = (typeof props.childrenNum !== 'undefined')
+      ? props.childrenNum
+      : (props.childNum != null ? props.childNum : (level <= 3 ? 1 : 0));
+    var key = (typeof currentMetric !== 'undefined' && currentMetric !== 'combined')
+      ? (name + '__' + currentMetric) : name;
+    var base = BIZ_DATA[key];
     if (base === undefined) {
-      var s = parseInt(String(adcode).slice(-2), 10) || 1;
+      var s = parseInt(adcode.slice(-2), 10) || 1;
       base = 1 + (s * 7) % 18;
     }
-    return { name: name, adcode: adcode, childrenNum: f.properties.childrenNum, value: base };
+    return { name: name, adcode: adcode, childrenNum: childrenNum, value: base };
   });
 }
 
 function showMap(node) {
   elMapLoading.innerHTML = '<span class="spin"></span>地图加载中...';
   elMapLoading.style.display = 'flex';
-
-  // 缓存命中（包含 localStorage 持久化的兜底）
-  if (geoCache[node.adcode]) { renderMap(geoCache[node.adcode]); return; }
-  try {
-    var ls = localStorage.getItem('map_' + node.adcode);
-    if (ls) { var g = JSON.parse(ls); geoCache[node.adcode] = g; renderMap(g); return; }
-  } catch(e){}
-
-  var cdns = [
-    'https://geo.datav.aliyun.com/areas_v3/bound/',
-    'https://geo.datav.aliyun.com/areas/bound/'
-  ];
-  var tryFetch = function(i) {
-    if (i >= cdns.length) {
-      if (node.adcode === ROOT_ADCODE) {
-        renderMap(makeFallbackGeo());
-      } else {
+  loadBoundaryGeo(node.adcode)
+    .then(function(geo){ renderMap(geo); })
+    .catch(function(err){
+      console.error('[dashboard] 本地边界数据加载失败:', node.adcode, err);
+      if (node.adcode !== ROOT_ADCODE) {
         breadcrumbStack = [{ adcode: ROOT_ADCODE, name: ROOT_NAME }];
         showMap(breadcrumbStack[0]);
+      } else {
+        elMapLoading.innerHTML = '地图数据加载失败: ' + (err && err.message ? err.message : err);
       }
-      return;
-    }
-    fetch(cdns[i] + node.adcode + '_full.json')
-      .then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function(geo){
-        geoCache[node.adcode] = geo;
-        try { localStorage.setItem('map_' + node.adcode, JSON.stringify(geo)); } catch(e){}
-        renderMap(geo);
-      })
-      .catch(function(){ tryFetch(i + 1); });
-  };
-  tryFetch(0);
+    });
 }
 
 function renderMap(geo) {
@@ -620,54 +568,83 @@ function renderMap(geo) {
 
   try {
     echarts.registerMap('map_' + top.adcode, geo);
-    var max = Math.max.apply(null, data.map(function(d){ return d.value; }).concat([1]));
+    var vals = data.map(function(d){ return d.value; });
+    var max = Math.max.apply(null, vals.concat([1]));
+    if (!isFinite(max) || max <= 0) max = 1;
+
     mapChart.setOption({
       backgroundColor: 'transparent',
       tooltip: {
         trigger: 'item',
-        backgroundColor: 'rgba(26,10,10,0.92)', borderColor: gold,
-        textStyle: { color: '#fff', fontSize: 12 },
+        backgroundColor: 'rgba(8,21,46,0.95)', borderColor: THEME.accent, borderWidth: 1,
+        textStyle: { color: THEME.text, fontSize: 12 },
         formatter: function(p){
- return p.name + '<br/>' + MAP_INDICATOR_LABEL + '：<b style="color:' + gold + '">' + (p.value || 0) + '</b>'; }
+          return '<div style="font-weight:600;color:' + THEME.accent + ';margin-bottom:4px;">' + p.name + '</div>' +
+                 MAP_INDICATOR_LABEL + ': <b style="color:' + THEME.accent + '">' + (p.value || 0) + '</b><br/>' +
+                 '<span style="color:#94A3B8;font-size:10px;">点击下钻 →</span>';
+        }
       },
       visualMap: {
         min: 0, max: max, calculable: false, show: false,
-        inRange: { color: ['rgba(245,158,11,0.06)', 'rgba(245,158,11,0.5)'] }
+        inRange: { color: ['rgba(79,138,255,0.06)', 'rgba(79,138,255,0.5)'] }
       },
       series: [{
-        type: 'map', map: 'map_' + top.adcode, roam: false, zoom: 1.1,
-        label: { show: true, color: '#FCE4E3', fontSize: 10 },
-        itemStyle: {
-          areaColor: 'rgba(245,158,11,0.06)',
-          borderColor: 'rgba(224,62,58,0.45)', borderWidth: 0.8
+        type: 'map', map: 'map_' + top.adcode, roam: false, zoom: 1.05,
+        label: {
+          show: true, color: THEME.textDim, fontSize: 10,
+          textBorderColor: 'rgba(8,21,46,0.85)', textBorderWidth: 2,
+          textShadowColor: 'rgba(8,21,46,0.85)', textShadowBlur: 4
         },
-        emphasis: { itemStyle: { areaColor: 'rgba(245,158,11,0.18)', borderColor: gold, borderWidth: 1.5 }, label: { color: '#fff', fontWeight: 600 } },
-        select: { itemStyle: { areaColor: 'rgba(245,158,11,0.25)', borderColor: gold }, label: { color: '#fff' } },
+        itemStyle: {
+          areaColor: 'rgba(79,138,255,0.06)',
+          borderColor: 'rgba(79,138,255,0.45)', borderWidth: 0.8,
+          shadowColor: 'rgba(79,138,255,0.15)', shadowBlur: 6
+        },
+        emphasis: {
+          label: {
+            show: true, color: '#fff', fontWeight: 700, fontSize: 12,
+            textBorderColor: 'rgba(8,21,46,1)', textBorderWidth: 3,
+            textShadowColor: 'rgba(8,21,46,0.9)', textShadowBlur: 6
+          },
+          itemStyle: { areaColor: 'rgba(79,138,255,0.25)', borderColor: THEME.accent, borderWidth: 1.5 }
+        },
+        select: {
+          label: { color: '#fff', textBorderColor: 'rgba(8,21,46,1)', textBorderWidth: 3 },
+          itemStyle: { areaColor: 'rgba(79,138,255,0.35)', borderColor: THEME.accent }
+        },
         data: data
       }]
     }, true);
+    elMapLoading.style.display = 'none';
+    renderBreadcrumb();
   } catch (err) {
-    elMapLoading.innerHTML = '地图渲染异常：' + (err && err.message ? err.message : err);
-    setTimeout(function(){ elMapLoading.style.display = 'none'; }, 2500);
-    return;
+    console.error('[dashboard] renderMap error:', err);
+    elMapLoading.innerHTML = '地图渲染异常: ' + (err.message || err);
   }
-  elMapLoading.style.display = 'none';
 }
 
 function drillDown(adcode, name) {
   breadcrumbStack.push({ adcode: String(adcode), name: name });
   showMap(breadcrumbStack[breadcrumbStack.length - 1]);
 }
-function goBack() {
-  if (breadcrumbStack.length <= 1) return;
-  breadcrumbStack.pop();
-  showMap(breadcrumbStack[breadcrumbStack.length - 1]);
-}
 function refreshMap() {
-  geoCache = {};
   breadcrumbStack = [{ adcode: ROOT_ADCODE, name: ROOT_NAME }];
   showMap(breadcrumbStack[0]);
 }
+
+function renderBreadcrumb() {
+  var html = '';
+  breadcrumbStack.forEach(function(node, idx) {
+    var active = idx === breadcrumbStack.length - 1;
+    html += '<span class="crumb ' + (active ? 'active' : '') + '" onclick="jumpToCrumb(' + idx + ')">' + node.name + '</span>';
+    if (idx < breadcrumbStack.length - 1) html += '<span class="sep">›</span>';
+  });
+  document.getElementById('breadcrumb').innerHTML = html;
+}
+window.jumpToCrumb = function(idx) {
+  breadcrumbStack = breadcrumbStack.slice(0, idx + 1);
+  showMap(breadcrumbStack[breadcrumbStack.length - 1]);
+};
 
 setTimeout(function(){ if (mapChart) mapChart.resize(); }, 200);
 showMap(breadcrumbStack[0]);
@@ -683,11 +660,16 @@ showMap(breadcrumbStack[0]);
 ```
 
 ```css
-.db-map { width: 100%; height: 100%; min-height: 380px; }
+.db-map-wrap {
+  flex: 1; min-height: 0; position: relative;
+  border-radius: 4px; overflow: hidden;
+  background: radial-gradient(ellipse at center, rgba(79,138,255,0.08) 0%, rgba(15,30,61,0.04) 70%);
+}
+.db-map { width: 100%; height: 100%; min-height: 480px; }
 #mapLoading {
   position: absolute; inset: 0; z-index: 6;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(26,10,10,0.55); color: var(--db-text-dim);
+  background: rgba(8,21,46,0.65); color: var(--db-text-dim);
   pointer-events: none;
 }
 ```
@@ -703,22 +685,20 @@ showMap(breadcrumbStack[0]);
 > 最小到市级（adcode 6 位），不要用区/县级做初始层级（数据碎片化）。
 > 业务可视范围 = 初始层级：业务只在某省 → 不要硬塞 100000 国家级。
 
-**§E 如何获取下辖列表（生成时怎么填 SUB_REGIONS 和 BIZ_DATA）**
+**§E 如何填 BIZ_DATA key（标准行政区名）**
 
-> SUB_REGIONS 和 BIZ_DATA 的 key 都必须是 DataV GeoJSON 的标准行政区名（properties.name 字段），不能自己造名。生成时按下面任一方法获取实际下辖列表：
+> BIZ_DATA 的 key 必须是本地 boundary GeoJSON 的 `properties.name`（标准行政区名），不能自己造名。生成时按下面任一方法获取：
 
 | 方法 | 步骤 | 适用 |
 |---|---|---|
-| **方法1：浏览器 fetch（首选）** | `fetch('https://geo.datav.aliyun.com/areas_v3/bound/ROOT_ADCODE_full.json').then(r=>r.json()).then(geo=>console.log(JSON.stringify(geo.features.map(f=>({a:f.properties.adcode,n:f.properties.name})))))` | 任何 ROOT_ADCODE |
+| **方法1：读本地 boundary 文件（首选）** | 用文件工具读 `data/map/boundary/province/{ROOT_ADCODE}.json`（国家级读 `china.json`），取 `features[].properties.name` 填 BIZ_DATA key | 任何层级 |
 | **方法2：常见省份速查** | 见下方"常见省级 adcode + 下辖列表" | ROOT_ADCODE 在速查表内时 |
 
-**生成时拿到 JSON 后**：
-- 复制 `{a: '...', n: '...'}` 数组填到 §A 的 `SUB_REGIONS`
-- 复制 `n` 字段填到 `BIZ_DATA` 的 key，value 按业务量级 mock
+**生成时拿到行政区名后**：复制 `properties.name` 填到 `BIZ_DATA` 的 key，value 按业务量级 mock。
 
 **常见省级 adcode + 下辖列表（速查，不全；不在表内走方法1）**
 
-| 省级 adcode | 省名 | SUB_REGIONS 的 n 列表 |
+| 省级 adcode | 省名 | 下辖市名（= BIZ_DATA key） |
 |---|---|---|
 | 110000 | 北京 | （直辖市，无下辖市） |
 | 120000 | 天津 | （直辖市） |
@@ -735,49 +715,47 @@ showMap(breadcrumbStack[0]);
 | 370000 | 山东 | 济南市/青岛市/淄博市/枣庄市/东营市/烟台市/潍坊市/济宁市/泰安市/威海市/日照市/临沂市/德州市/聊城市/滨州市/菏泽市 |
 | 410000 | 河南 | 郑州市/开封市/洛阳市/平顶山市/安阳市/鹤壁市/新乡市/焦作市/濮阳市/许昌市/漯河市/三门峡市/南阳市/商丘市/信阳市/周口市/驻马店市/济源市 |
 
-> ROOT_ADCODE='100000' 时**不要填 SUB_REGIONS**——引擎内置 NATIONAL_PROVINCES 兜底（34 个省级全在内）。
+> 国家级（ROOT_ADCODE=100000）的 BIZ_DATA key 用 34 个省级名，直接读 `china.json` 的 `properties.name` 即可（方法1）。
 > ROOT_ADCODE 不在速查表内（其他省份或市级）必须用方法1。
 
 **§F 生成大屏地图时的执行步骤**
 
 1. **确定 ROOT_ADCODE**：按业务可视范围查 §D 表
-2. **fetch 一次拿 SUB_REGIONS 和 BIZ_DATA key**：浏览器控制台跑方法1，复制 `[{a,n}, ...]` 到 SUB_REGIONS
-3. **写 §A 五个变量**：ROOT_ADCODE / ROOT_NAME / MAP_INDICATOR_LABEL / BIZ_DATA / SUB_REGIONS
-4. **整段复制 §B 引擎代码 + §C HTML/CSS**，**不改动任何字符**
+2. **拷贝边界数据**：从技能 `references/boundary/` 拷到项目 `data/map/boundary/`（详见 SKILL.md §2.5）。**如果项目已有完整 boundary 目录则直接复用**
+3. **写 §A 五个变量**：ROOT_ADCODE / ROOT_NAME / MAP_INDICATOR_LABEL / BIZ_DATA / currentMetric（key 按 §E 获取；多指标业务另见 §3.4.3）
+4. **整段复制 §B 引擎代码 + §C HTML/CSS**，**不改动任何字符**（仅 §A 业务变量 + `THEME = readTheme()` 前置）
 5. **验证**：
-   - 打开 dashboard.html 应看到完整地图（CDN 通）
-   - 第一次访问成功后即使断网，下次打开仍能用（localStorage 缓存）
-   - CDN 全挂 + localStorage 空时，仍能看到 ROOT_ADCODE 下辖的完整矩形兜底地图
+   - 页面经 HTTP 服务打开（`fetch` 在 `file://` 协议下会失败）
+   - 打开 dashboard.html 应看到完整地图（本地 boundary 文件可读）
+   - 点击省/市可下钻（`province/`、`city/` 文件齐全）
 
-**UI 元素清单（按四象限严格分区，不允许合并堆叠）**
+**UI 元素清单（按三角分区，不允许合并堆叠）**
 
 | 元素 | 位置 | 作用 |
 |------|------|------|
 | 工具栏（刷新等次要按钮） | 地图**左上** | `top:10px; left:10px`；`.db-map-toolbar` 容器 |
-| 面包屑（crumb） | 地图**右上** | `top:10px; right:10px`；`.db-map-breadcrumb`；路径导航 `全国 › 广东省 › 广州市`，点击任意级跳回 |
-| 返回按钮 | 地图**左下**（**独立按钮**，不与其他按钮合并） | `bottom:10px; left:10px`；`.db-map-back`；主操作入口，国家级/初始层时 `disabled` |
-| 悬浮统计 pill | 地图**右下** | `bottom:10px; right:10px`；`.db-map-stats`；当前级汇总指标（订单/车辆/司机） |
-| 右键菜单 | 地图任意处 | 替代双击，避免误触；`contextmenu` + `preventDefault` |
+| 面包屑（crumb） | 地图**右上** | `top:10px; right:10px`；`.db-map-breadcrumb`；路径导航 `全国 › 广东省 › 广州市`，**点击任意级跳回（即返回上级导航）** |
+| 悬浮统计 pill | 地图**右下** | `bottom:10px; right:10px`；`.db-map-stats`；当前级汇总指标（内容业务定，由业务函数在 `renderMap` 成功后更新） |
 | Loading 蒙层 | 地图中央 | fetch 期间显示，**关键：`pointer-events: none` 不拦截按钮点击** |
-| 降级提示横幅 | 地图上方居中 | 网络故障用 demo 数据时显示"⚠ 当前为演示数据" |
 
-> **生成时必须按此四象限分布**：左上工具栏 / 右上面包屑 / 左下返回按钮 / 右下悬浮统计。**返回按钮必须独立**（不要与刷新按钮合并到工具栏），否则会被 canvas + loading 蒙层拦截，且视觉重心偏离左下习惯位。所有地图交互按钮显式加 `pointer-events: auto`。
+> **生成时必须按此三角分布**：左上工具栏 / 右上面包屑 / 右下悬浮统计。**左下不放常驻按钮**——返回上级靠面包屑点击完成。所有地图交互按钮显式加 `pointer-events: auto`。
 
 **地图配色（不要喧宾夺主）**
 
 ```js
+// 与 §B 引擎配色口径一致（品牌蓝 79,138,255 系；§B 引擎为准，此处为参数说明）
 itemStyle: {
-  areaColor: 'rgba(77,208,225,0.06)',       // 默认态：低透明度蓝绿
-  borderColor: 'rgba(77,208,225,0.45)',     // 描边清晰但不过亮
+  areaColor: 'rgba(79,138,255,0.06)',        // 默认态：低透明度品牌蓝
+  borderColor: 'rgba(79,138,255,0.45)',      // 描边清晰但不过亮
   borderWidth: 0.8,
-  shadowColor: 'rgba(77,208,225,0.15)',     // 微微发光
+  shadowColor: 'rgba(79,138,255,0.15)',      // 微微发光
   shadowBlur: 6
 },
-emphasis: {                                  // hover：微亮 + 描边加粗
-  itemStyle: { areaColor: 'rgba(77,208,225,0.18)', borderColor: accent(), borderWidth: 1.5 }
+emphasis: {                                   // hover：微亮 + 描边加粗（边框用 theme.accent）
+  itemStyle: { areaColor: 'rgba(79,138,255,0.25)', borderColor: 'theme.accent', borderWidth: 1.5 }
 },
-select: {                                    // 选中（下钻后保持高亮）
-  itemStyle: { areaColor: 'rgba(77,208,225,0.25)', borderColor: accent2() }
+select: {                                     // 选中（下钻后保持高亮）
+  itemStyle: { areaColor: 'rgba(79,138,255,0.35)', borderColor: 'theme.accent' }
 }
 ```
 
@@ -787,13 +765,9 @@ select: {                                    // 选中（下钻后保持高亮�
 
 按 `adcode` 做稳定 hash（同区域数据稳定不跳变）。**已在 §3.4.1 引擎骨架的 `mockBizData()` 内置**，直接抄即可。接入真实 API 时替换 `mockBizData` 函数体，**入参 adcode / features 不变**。
 
-**网络容错**
+**加载失败回退**
 
-完整的多 CDN + 内置矩形兜底 + 下钻回退逻辑**已在 §3.4.1 引擎骨架的 `showMap()` 内置**（CDN 数组 + tryFetch 递归 + ROOT/CDN 全挂时 `makeFallbackGeo` + 下钻失败退回 ROOT）。不需要再额外写。
-
-**初始层级兜底 GeoJSON 模板**
-
-**已在 §3.4.1 引擎骨架的 `makeFallbackGeo()` 内置**——按 ROOT_ADCODE 实际行政区补 `cities` 数组即可。**全国（100000）** 画 34 省矩形；**省级（450000）** 画 14 市矩形；**市级（450100）** 画 12 区/县矩形。
+下钻失败自动回退 `ROOT_ADCODE` 的逻辑**已在 §3.4.1 引擎骨架的 `showMap()` 内置**（`loadBoundaryGeo` 的 catch 中：非 ROOT 层级失败 → 回退 ROOT；ROOT 失败 → 显示错误文案）。不需要再额外写。
 
 #### 3.4.2 地图常见踩坑（事后参考，不要事后修）
 
@@ -801,15 +775,80 @@ select: {                                    // 选中（下钻后保持高亮�
 
 | 现象 | 根因 | 做法（不是事后补救，是**生成时就必须遵守**）|
 |------|------|----------------------------------------------|
-| `<button>` 默认 type="submit" | 部分浏览器触发表单提交 | HTML 显式 `type="button"`（§3.4.1 工具栏/返回按钮已显式标注） |
-| 双击返回太敏感（误触下钻） | dblclick 与 click 冲突 | 用右键 `contextmenu` 触发下钻（不是 dblclick） |
+| `<button>` 默认 type="submit" | 部分浏览器触发表单提交 | HTML 显式 `type="button"`（工具栏按钮显式标注） |
 | 业务只在广西却硬编码 100000 国家级 | 没区分业务范围 | §3.4.1 顶部 `var ROOT_ADCODE = '450000'`，**按业务决定**，不固定 100000 |
 | 顶栏「当前层级」写成"中华人民共和国"常量 | 没意识到 ROOT 是变量 | HTML 初值 = `ROOT_NAME`；JS 每次 render 同步更新 |
-| 下钻失败回退到全国 | catch 内写死 `100000` | §3.4.1 的 `tryFetch` 回退到 `ROOT_ADCODE`，不是 100000 |
-| 面包屑/刷新/返回按钮位置错乱 | 生成时图省事合并到顶部 | 按 §3.4.1 UI 清单分区：面包屑→右上 / 返回按钮→左下（独立）/ 工具栏→左上 / 悬浮统计→右下 |
+| 下钻失败回退到全国 | catch 内写死 `100000` | §3.4.1 的 `showMap()` catch 回退到 `ROOT_ADCODE`，不是 100000 |
+| 面包屑/刷新按钮位置错乱 | 生成时图省事合并到顶部 | 按 §3.4.1 UI 清单分区：面包屑→右上 / 工具栏→左上 / 悬浮统计→右下 |
 | JS 报错 `xxx is not defined at autoResizeChart` | 工厂内 `var xxx = cv('--db-xxx')` 漏写 | §0.3 工厂签名固定为 `function(chart, theme)`，直接 `theme.accent`，**禁止工厂内 cv() 声明** |
 | `getComputedStyle('--db-accent-warm')` 返回空字符串 | default 主题 `:root` 漏声明该变量 | §2 三主题 CSS 变量**逐主题完整定义** `--db-accent` / `--db-accent-2` / `--db-accent-warm` 三件套 |
 | 按钮被 canvas 拦截，点击无响应 | canvas 在 z-index 上层，按钮忘 `pointer-events: auto` | §3.4.1 所有地图按钮显式 `pointer-events: auto` |
+
+#### 3.4.3 指标切换 Tab（按业务需要）
+
+> 当同一张地图要展示**多个指标维度**（如"总量 / 近30天新增 / 净增长 / 饱和度"）时启用。单指标业务跳过本节。
+> 引擎（§B）已支持多指标取值：`currentMetric` 非 `'combined'` 时，`mockBizData` 按 `name__指标key` 查 `BIZ_DATA`；本节只需补 Tab UI + 事件。
+> **下面示例中的指标名（总量/新增/净增长/饱和度）只是通用占位，生成时必须替换为业务自己的指标命名，禁止照抄**。
+
+**1) BIZ_DATA 多指标键规则**（§A 生成时同时写入）：
+
+```js
+// 默认指标：key = 行政区名
+BIZ_DATA['广东'] = 640;
+// 其他指标：key = 行政区名 + '__' + 指标key（指标key = Tab 的 data-metric 值）
+BIZ_DATA['广东__add30d'] = 18;
+BIZ_DATA['广东__net30d'] = 14;
+BIZ_DATA['广东__heat'] = 92.5;
+```
+
+**2) Tab HTML + CSS**（放在地图面板标题行或地图上方独立面板）：
+
+```html
+<div class="db-tabs" id="metricTabs">
+  <button class="db-tab active" data-metric="combined" type="button">总量</button>
+  <button class="db-tab" data-metric="add30d" type="button">近30天新增</button>
+  <button class="db-tab" data-metric="net30d" type="button">净增长</button>
+  <button class="db-tab" data-metric="heat" type="button">饱和度</button>
+</div>
+```
+
+```css
+.db-tabs{display:flex;gap:6px;flex-wrap:wrap;}
+.db-tab{
+  padding:4px 12px;font-size:12px;
+  background:rgba(79,138,255,.06);
+  border:1px solid rgba(79,138,255,.18);
+  color:var(--db-text-dim);border-radius:3px;
+  cursor:pointer;transition:all 0.15s;
+}
+.db-tab:hover{color:var(--db-text);}
+.db-tab.active{background:var(--db-accent);color:#08152E;border-color:var(--db-accent);font-weight:600;}
+```
+
+**3) Tab 事件**（更新 `currentMetric` + `MAP_INDICATOR_LABEL`，重渲染当前层）：
+
+```js
+// 指标key → 指标中文名（tooltip 用），按业务生成，禁止照抄示例
+var METRIC_LABELS = {
+  'combined': '[总量指标名]', 'add30d': '[近30天新增]',
+  'net30d': '[净增长]', 'heat': '[饱和度]'
+};
+document.querySelectorAll('.db-tab').forEach(function(t){
+  t.addEventListener('click', function() {
+    document.querySelectorAll('.db-tab').forEach(function(x){ x.classList.remove('active'); });
+    this.classList.add('active');
+    currentMetric = this.getAttribute('data-metric');
+    MAP_INDICATOR_LABEL = METRIC_LABELS[currentMetric] || MAP_INDICATOR_LABEL;
+    showMap(breadcrumbStack[breadcrumbStack.length - 1]);   // 重渲染当前层（下钻态下切指标不丢层级）
+  });
+});
+```
+
+**关键约束**：
+- `data-metric` 的值必须与 BIZ_DATA 多指标键后缀**严格一致**，否则查不到值落入 mock 兜底
+- 切换指标重渲染时**保持 `breadcrumbStack` 不变**（当前在哪层就重画哪层），不要重置回 ROOT
+- **只声明一个 `currentMetric` 变量**，禁止 `currentCurrentMetric` 之类的重复赋值（§5.5 高频白屏坑）
+- 缺数据的区域走 `mockBizData` 内置兜底（按 adcode 稳定 hash），不会 NaN/undefined
 
 ### 3.5 实时事件流（按需）
 
@@ -866,17 +905,17 @@ select: {                                    // 选中（下钻后保持高亮�
 >   show: true,
 >   color: theme.text,                            // 浅灰白
 >   fontSize: 10,
->   textBorderColor: 'rgba(20, 8, 12, 0.85)',     // 深底色描边
+>   textBorderColor: 'rgba(8,21,46,0.85)',        // 深底色描边（与 §B 引擎统一口径）
 >   textBorderWidth: 2,
->   textShadowColor: 'rgba(20, 8, 12, 0.85)',     // 阴影双保险
+>   textShadowColor: 'rgba(8,21,46,0.85)',        // 阴影双保险
 >   textShadowBlur: 4
 > },
 > emphasis: {
 >   label: {
 >     show: true, color: '#fff', fontWeight: 700, fontSize: 12,
->     textBorderColor: 'rgba(20, 8, 12, 1)',       // hover 更深更粗
+>     textBorderColor: 'rgba(8,21,46,1)',          // hover 更深更粗
 >     textBorderWidth: 3,
->     textShadowColor: 'rgba(20, 8, 12, 0.9)',
+>     textShadowColor: 'rgba(8,21,46,0.9)',
 >     textShadowBlur: 6
 >   },
 >   itemStyle: { ... }
@@ -884,7 +923,7 @@ select: {                                    // 选中（下钻后保持高亮�
 > select: {
 >   label: {
 >     color: '#fff',
->     textBorderColor: 'rgba(20, 8, 12, 1)',
+>     textBorderColor: 'rgba(8,21,46,1)',
 >     textBorderWidth: 3
 >   },
 >   itemStyle: { ... }
@@ -896,67 +935,64 @@ select: {                                    // 选中（下钻后保持高亮�
 > - emphasis 是否用了白字但区域底色也是浅色 —— 描边加粗
 > - 下钻后图斑变小 —— `fontSize` 不要小于 10px，描边要更粗
 
-### 4.1 通用地图初始化
+### 4.1 通用地图初始化（单级，不下钻）
+
+> 不下钻的单级地图（销售热力、客户分布等）不用 §3.4.1 完整引擎，复用其 `loadBoundaryGeo` 取本地 GeoJSON + `registerMap`，并用 §0.3 的 `autoResizeChart` 渲染。工厂签名 `function(chart, theme)`，**禁止工厂内 `cv()` 声明**。
 
 ```js
-function autoResizeMap(id, factory) {
-  var el = document.getElementById(id);
-  if (!el) return;
-  var chart = echarts.init(el, null, { renderer: 'canvas' });
-  var theme = readTheme();              // 同样注入 theme（复用 §0.3 的 readTheme）
-  factory(chart, theme);                // 工厂签名：function(chart, theme)
-  charts.push(chart);
-  if (window.ResizeObserver) {
-    new ResizeObserver(function() { chart.resize(); }).observe(el);
-  }
-}
-
-fetch('https://geo.datav.aliyun.com/areas_v3/bound/[adcode]_full.json')
-  .then(function(r) { return r.json(); })
+// 前置：var theme = readTheme();  （§0.3）
+loadBoundaryGeo('100000')   // 复用 §3.4.1 的本地加载器
   .then(function(geo) {
-    echarts.registerMap('[name]', geo);
-    autoResizeMap('[地图id]', function(chart) {
-      var accent = cv('--db-accent');
-      var accent2 = cv('--db-accent-2');
+    echarts.registerMap('map_china', geo);
+    autoResizeChart('dbMap', function(chart, theme) {
       chart.setOption({
         backgroundColor: 'transparent',
-        tooltip: { trigger: 'item', backgroundColor: cv('--db-bg-to') + 'EE', borderColor: accent, textStyle: { color: cv('--db-text') } },
+        tooltip: { trigger: 'item', backgroundColor: theme.bgTo + 'EE', borderColor: theme.accent, textStyle: { color: theme.text } },
         series: [{
-          type: 'map', map: '[name]', roam: false, zoom: 1.2,
-          label: { show: true, color: cv('--db-text-dim'), fontSize: 10 },
-          itemStyle: { areaColor: cv('--db-bar-bg'), borderColor: accent, borderWidth: 0.6 },
-          emphasis: { itemStyle: { areaColor: accent }, label: { color: '#fff', fontWeight: 600 } },
-          data: [/* {name:'[区域名]', value:[N]} */]
+          type: 'map', map: 'map_china', roam: false, zoom: 1.2,
+          label: {
+            show: true, color: theme.textDim, fontSize: 10,
+            textBorderColor: 'rgba(8,21,46,0.85)', textBorderWidth: 2
+          },
+          itemStyle: { areaColor: 'rgba(79,138,255,0.06)', borderColor: theme.accent, borderWidth: 0.6 },
+          emphasis: { itemStyle: { areaColor: theme.accent }, label: { color: '#fff', fontWeight: 600 } },
+          data: [/* {name:'[区域名]', value:N} */]
         }],
-        visualMap: { min: 0, max: [按数据实际最大值定], calculable: false, show: false, inRange: { color: [cv('--db-bar-bg'), accent, accent2] } }
+        visualMap: { min: 0, max: 1, calculable: false, show: false, inRange: { color: ['rgba(79,138,255,0.06)', 'rgba(79,138,255,0.5)'] } }
       });
     });
   })
-  .catch(function() {
-    var el = document.getElementById('[地图id]');
-    if (el) el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--db-text-dim);">地图加载失败，请检查网络</div>';
+  .catch(function(err) {
+    var el = document.getElementById('dbMap');
+    if (el) el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--db-text-dim);">地图加载失败：' + (err && err.message ? err.message : err) + '</div>';
   });
 ```
 
-### 4.2 DataV GeoJSON URL 规则
+### 4.2 本地边界数据路径规则
 
-URL 模板：`https://geo.datav.aliyun.com/areas_v3/bound/{adcode}_full.json`
+本地 GeoJSON 路径由 §3.4.1 的 `getBoundaryPath()` 统一拼接：
 
-| 级别 | 示例 | URL |
+| 级别 | adcode 示例 | 本地文件路径 |
 |------|------|-----|
-| 国家级 | 中国 | `bound/100000_full.json` |
-| 省级 | 江苏省 | `bound/320000_full.json` |
-| 市级 | 南京市 | `bound/320100_full.json` |
-| 区/县级 | 鼓楼区 | `bound/320106_full.json` |
+| 国家级 | 100000（中国） | `data/map/boundary/china.json` |
+| 省级 | 320000（江苏） | `data/map/boundary/province/320000.json` |
+| 市级 | 320100（南京） | `data/map/boundary/city/320100.json` |
 
-### 4.3 各级别适配要点
+> **数据来源**：项目内的 `data/map/boundary/` 目录**必须**从技能素材库 `references/boundary/` 拷贝而来（`china.json` + `province/` + `city/`，详见 SKILL.md §2.5）。**不要**运行时从 CDN 下载，**不要**自己手写 GeoJSON。
+>
+> 本地数据只到**市级**（`china.json` + `province/` + `city/`），**无区/县级独立文件**，下钻到市为止（区县下钻会 `fetch` 失败自动回退 ROOT）。
 
-| 级别 | data 规模 | `label.show` | `roam` | `fontSize` | `zoom` |
-|------|----------|--------------|--------|------------|--------|
-| 国家级 | 34 省级全覆盖 | `true` | `false` | 10 | 1.2 |
-| 省级 | 13~21 个市 | `true` | `false` | 10 | 1.0 |
-| 市级 | 50~150 个区/县 | `false`（hover 显示） | `true` | 9 | 1.0 |
-| 区/县级 | 几百个街道 | `false` | `true` | 8 | 1.0 |
+### 4.3 各级别适配要点（可选微调参考，非强制）
+
+> **默认整段照抄 §3.4.1 §B 引擎（`label.show:true` / `roam:false` / `fontSize:10` / `zoom:1.05` 固定值），不要按本表改动引擎代码**。本表仅供业务确有特殊需要（如区县密集需要关闭常驻 label）时的微调参考。默认参数已在多版驾驶舱验证可用。
+
+| 级别 | data 规模 | 默认（引擎固定值） | 可选微调 |
+|------|----------|--------------------|----------|
+| 国家级 | 34 省级全覆盖 | `label.show:true` / `roam:false` / `fontSize:10` / `zoom:1.05` | 无需调整 |
+| 省级 | 13~21 个市 | 同上 | 无需调整 |
+| 市级 | 区/县子级（按文件内 features 数） | 同上（区县名常驻显示） | 图斑过密看不清时可 `label.show:false`（hover 显示）/ `roam:true`
+
+> 本地数据到市级为止，无区/县级独立文件；市级为**最末下钻层级**。
 
 ---
 
@@ -968,12 +1004,12 @@ URL 模板：`https://geo.datav.aliyun.com/areas_v3/bound/{adcode}_full.json`
 
 | 翻车现象 | 根因 | 修复建议 |
 |---------|------|----------|
-| 地图"很小"且重叠 | `.db-map` 没显式 height，ECharts init 拿到 0 高度 | `.db-map { width: 100%; height: 100%; min-height: 420px }` |
-| 地图显示太小（被左右列挤压） | 左右业务分析列太宽（320px×2），中央 1fr 被压缩 | 主区 grid `260px 1fr 260px`；KPI 砍到 4 个、行高 88px；总 padding 8×12；左侧只放必要信息 |
+| 地图"很小"且重叠 | `.db-map` 没显式 height，ECharts init 拿到 0 高度 | `.db-map { width: 100%; height: 100%; min-height: 480px }` |
+| 地图显示太小（被左右列挤压） | 左右业务分析列太宽，中央 1fr 被压缩 | 主区 grid 左右列 260~340px（不超过 360px）；KPI 4~6 个、行高 88~116px；总 padding 8×12；左侧只放必要信息 |
 | 地图加载后尺寸不对 | 没用 `ResizeObserver`，只在 `window.resize` 时 resize | 用 `ResizeObserver` 监听容器 |
 | 地图下半部分被裁掉 | 主体三列用 `height: 100vh` 而不是 grid `1fr` | 用 grid 顶层分配，1fr 自动收缩 |
 | 总高度超 100vh | 每段独立 height 相加 > 900px | 用 grid 顶层分配，或精简区块 |
-| 容器在 Grid/Flex 内 init 时高度为 0 | 同步脚本执行时 Grid 布局尚未稳定 | `.db-map { min-height: 420px }` + init 时若 `clientHeight===0` 强制 `min-height` 兜底 + `setTimeout(resize, 200)` 延迟双保险 |
+| 容器在 Grid/Flex 内 init 时高度为 0 | 同步脚本执行时 Grid 布局尚未稳定 | `.db-map { min-height: 480px }` + init 时若 `clientHeight===0` 强制 `min-height` 兜底 + `setTimeout(resize, 200)` 延迟双保险 |
 
 ### 5.2 渲染与配色
 
@@ -989,8 +1025,8 @@ URL 模板：`https://geo.datav.aliyun.com/areas_v3/bound/{adcode}_full.json`
 | 翻车现象 | 根因 | 修复建议 |
 |---------|------|----------|
 | 任何抛错都被 catch 吞并显示"加载失败" | catch 兜底范围过大，把"渲染异常"也当成"网络失败" | render 包独立 try/catch，区分"加载失败 vs 渲染异常"；catch 文案带 `err.message`；加 `console.log` 与 `window.__dbgMap` 暴露给控制台 |
-| CDN 全挂后空白页 | 仅 innerHTML 覆盖"加载失败"文字 | 初始层级内置矩形 GeoJSON 兜底（`buildFallbackRootGeo()` 按 ROOT_ADCODE 决定 34 省/14 市/12 区/县），下钻层级失败自动退回 ROOT_ADCODE + Toast |
-| 错误文案误导排查 | 只说"加载失败"不说原因 | 三态文案分离：① loading spinner + "加载 xxx 地图..."；② 错误态显示 `err.message` + "重新加载"按钮；③ demo 模式下顶部横幅 "⚠ 当前为演示数据" |
+| 本地边界文件缺失后空白 | 仅 innerHTML 覆盖"加载失败"文字 | §3.4.1 `showMap()` 的 catch：非 ROOT 层级失败自动退回 ROOT_ADCODE；ROOT 失败显示 `err.message` |
+| 错误文案误导排查 | 只说"加载失败"不说原因 | 两态文案分离：① loading spinner + "地图加载中..."；② 错误态显示 `err.message` + "重新加载"入口 |
 | max=0 时 visualMap 抛 warn | 数据全 0 时除以 0 | `if (!isFinite(max) \|\| max <= 0) max = 1` 兜底 |
 | 用户被通用"加载失败"误导 | 没暴露真实错误 | 暴露 `window.__dbgMap = { el, chart }`，console 加 `[dashboard] init map, container size: WxH` 与 `setOption OK, features=N` 日志 |
 
@@ -1001,6 +1037,56 @@ URL 模板：`https://geo.datav.aliyun.com/areas_v3/bound/{adcode}_full.json`
 | KPI 数字旁没有单位 | `el.innerHTML = prefix+val+suffix` 直接覆盖，`.unit` 子节点丢失 | 递增动画里只替换数字文本，保留 `.unit` 子节点：`el.firstChild.nodeValue = formatted` 或在渲染前保存 unit 元素 |
 | 前缀/后缀/小数位丢失 | 简单拼接字符串 | 用 `data-prefix`/`data-suffix`/`data-decimals` 三个 dataset 属性驱动 |
 | 数字格式化不友好 | `38.0` 显示为 `38.000000` | `toLocaleString('zh-CN', { minimumFractionDigits: decimals })` |
+
+### 5.5 JS 健壮性(实战高频踩坑 · 影响白屏)
+
+> **驾驶舱页面一旦 JS 中途报错,后续所有图表都不渲染,现象是「白屏」或「只看见 KPI 和暗底」**」**整页脚本必须能容忍单个图表初始化失败**」
+
+| 翻车现象 | 根因 | 修复建议(强制) |
+|---------|------|----------|
+| **大屏白屏 / 地图加载失败后整个页面死掉** | 单个图表 init 抛出异常后,后续 `setOption` 全部跳过;且无任何用户可见提示 | **每个初始化调用包独立 try/catch**(不可共用 try);catch 内 `console.error` 输出 + 在地图区显示错误占位;失败后该面板显示"加载失败"占位,其他面板照常工作 |
+| **JS 错误无法定位** | 大屏在 iframe 内,浏览器默认只显示空白,无任何错误反馈 | **必须在 `<script>`>` 开头注册 `window.addEventListener('error', ...)` 和 `unhandledrejection`**,在 `#mapLoading` 等容器里显示错误信息;同时 `console.error('[dashboard] GLOBAL ERROR:', msg, '@', filename, ':', lineno)` |
+| **`s.s.x` 属性路径错误触发白屏** | 拼错对象属性层级,JS 在 `setOption` 时抛 TypeError,**致命**中断后续脚本 | 生成时校验所有 `obj.xxx` 路径必须与 §A 业务数据结构对齐;调试期建议在 `mockBizData` 内用 `console.log('[dashboard] mockBizData sample:', data.slice(0,3))` 验证 |
+| **缩放数学陷阱产生 NaN** | `Math.round(v/0*)` 表达式错误(` `是合法语法但运算结果 NaN);`Math.round(v*0)` 永远是 0 | 缩放必须用明确系数,如 `Math.round(v * 0.5)`;**禁止使用 `*` 或 `/` 后跟未闭合的标识符** |
+| **冗余变量命名混乱** | `var currentMetric` 与 `var currentCurrentMetric` 混用,一处忘记改名导致引用 undefined | 同一概念**只声明一个 var**,Tab 切换处不要重复 `currentCurrentMetric = currentMetric` 这类冗余赋值 |
+| **CSS hex 写错位数** | `#EDFF6C02`(8位含 alpha 但变量只识别 6/8 位)| 大屏色值用**标准 6 位 hex**(如 `#ED6C02`);如果需要透明度,用 `rgba(...)` |
+| **CDN 资源失败页面空白** | echarts / bootstrap CDN 不可达时,后续脚本全部报错 | 在 `<script src="echarts...">` 之前先同步引入核心依赖,失败时给提示;**§A 中业务配置和 §B 引擎代码的依赖顺序要严格保持** |
+
+#### §5.5.1 初始化代码模板(强制结构)
+
+```javascript
+// === 1. 全局错误兜底(必须在最前面,捕获一切后续错误)===
+window.addEventListener('error', function(e) {
+  console.error('[dashboard] GLOBAL ERROR:', e.message, '@', e.filename, ':', e.lineno + ':' + e.colno);
+  var el = document.getElementById('mapLoading');
+  if (el) { el.innerHTML = '<div style="color:#FF6B6B">页面错误: ' + e.message + '</div>'; el.style.display = 'flex'; }
+});
+
+// === 2. 主题变量读取 ===
+var THEME = readTheme();
+
+// === 3. 引擎代码(loadBoundaryGeo / showMap / renderMap) ===
+
+// === 4. 渲染调用 - 每个独立 try/catch ===
+// [业务渲染函数] = 页面里每个面板的初始化函数，按实际函数名替换（如榜单/事件流/明细表等），每个独立包裹
+try { renderRankList(); } catch(e) { console.error('[dashboard] renderRankList:', e); }
+try { renderEventStream(); } catch(e) { console.error('[dashboard] renderEventStream:', e); }
+try { showMap(breadcrumbStack[0]); } catch(e) { console.error('[dashboard] showMap:', e); }
+
+// === 5. 容器 resize ===
+setTimeout(function(){ if (mapChart) mapChart.resize(); }, 200);
+```
+
+> **反例**:`try { renderRankList(); renderEventStream(); showMap(); } catch(e) {}` —— 一个失败会跳过后续所有调用。
+
+#### §5.5.2 调试输出(建议)
+
+```javascript
+console.log('[dashboard] init, container size:', elMap.clientWidth + 'x' + elMap.clientHeight);
+window.__dbgMap = { getChart: function(){ return mapChart; } };
+```
+
+> 用户打开大屏只看到白屏时,可提示按 F12 在控制台查看 `[dashboard] GLOBAL ERROR: ...` 提示。
 
 ---
 

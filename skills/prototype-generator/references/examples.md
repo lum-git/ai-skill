@@ -485,13 +485,14 @@
   <style>
     body{background:var(--bg-body);font-family:var(--font-family);}
     .container{max-width:800px;}
-    .header{background:linear-gradient(135deg,var(--primary-dark),var(--primary));color:#fff;padding:2.5rem 0;margin-bottom:2rem;}
+    .header{background:linear-gradient(135deg,var(--primary-active,#1F4DC4),var(--primary));color:#fff;padding:2.5rem 0;margin-bottom:2rem;}
+    .header h2,.header small,.header i{color:#fff;}
     .entry-card{background:var(--bg-white);border-radius:10px;padding:1.5rem;box-shadow:var(--shadow-sm);transition:transform 0.15s; border:1px solid var(--border-light);}
     .entry-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);} .entry-card .icon{font-size:2rem;}
   </style>
 </head>
 <body>
-<div class="header text-center"><h2 class="mb-1"><i class="bi bi-shield-check me-2"></i>[系统名称]</h2><small>[日期] · PC X 页 + App Y 页</small></div>
+<div class="header text-center"><h2 class="mb-1"><i class="bi bi-shield-check me-2"></i>[系统名称]</h2><small>[日期] · v[版本号] · PC X 页 + App Y 页</small></div>
 <div class="container">
   <div class="row g-4">
     <div class="col-md-6"><a href="pc/index.html" class="text-decoration-none"><div class="entry-card"><div class="d-flex align-items-center gap-3 mb-2"><i class="bi bi-display icon text-primary"></i><div><h5 class="mb-0">PC 管理端</h5><small class="text-muted">全功能 · X 页</small></div></div></div></a></div>
@@ -686,25 +687,26 @@ CSS：始终用 `var(--primary)`、`var(--gray-200)` 等变量，不硬编码色
 /* ---- 默认风格 ---- */
 :root,
 :root[data-skin="default"] {
-  --primary:#3370FF;--primary-hover:#2860E1;--primary-active:#1F4DC4;--primary-light:#E1EBFF;--primary-bg:#F0F5FF;
+  --primary:#3370FF;--primary-hover:#2860E1;--primary-active:#1F4DC4;--primary-dark:#1F4DC4;--primary-light:#E1EBFF;--primary-bg:#F0F5FF;
   --success:#00B578;--success-light:#E8F9F2;--warning:#FF7D00;--warning-light:#FFF3E8;--danger:#F53F3F;--danger-light:#FFEDED;
   --text-primary:#1F2329;--text-secondary:#646A73;--text-tertiary:#8F959E;--text-disabled:#BEC2C7;--text-link:#3370FF;
   --bg-body:#F5F6F7;--bg-white:#FFFFFF;--bg-card:#FFFFFF;--bg-hover:#F2F3F5;--bg-active:#E8EAED;--bg-mask:rgba(0,0,0,0.4);
   --border-default:#E5E6EB;--border-light:#F0F1F4;--border-heavy:#C9CDD4;
-  --sidebar-bg:#1F2329;--sidebar-hover:#2B2F36;--sidebar-text:#8B8F97;--sidebar-text-hover:#C9CDD4;--sidebar-text-active:#FFFFFF;--sidebar-section-title:#5E6269;--sidebar-divider:rgba(255,255,255,0.06);
+  --sidebar-bg:#1F4DC4;--sidebar-hover:#2A5BD4;--sidebar-text:rgba(255,255,255,0.85);--sidebar-text-hover:#FFFFFF;--sidebar-text-active:#FFFFFF;--sidebar-section-title:rgba(255,255,255,0.65);--sidebar-divider:rgba(255,255,255,0.18);
   --header-bg:#FFFFFF;--header-text:#1F2329;--header-border:#E5E6EB;--header-height:56px;
+  --primary-active-bg:rgba(255,255,255,0.2);
   --shadow-xs:0 1px 2px rgba(0,0,0,0.04);--shadow-sm:0 1px 3px rgba(0,0,0,0.06);--shadow-md:0 4px 12px rgba(0,0,0,0.08);--shadow-lg:0 8px 24px rgba(0,0,0,0.12);--shadow-card:0 1px 4px rgba(0,0,0,0.04);
   --radius-xs:4px;--radius-sm:6px;--radius-md:8px;--radius-lg:12px;--radius-xl:16px;--radius-full:9999px;
   --space-xs:4px;--space-sm:8px;--space-md:12px;--space-lg:16px;--space-xl:20px;--space-2xl:24px;--space-3xl:32px;
   --font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
   --font-size-xs:12px;--font-size-sm:13px;--font-size-base:14px;--font-size-md:14px;--font-size-lg:18px;--font-size-xl:18px;--font-size-2xl:20px;--font-size-3xl:24px;
   --sidebar-width:220px;--sidebar-collapsed-width:64px;
-  --accent-gold:transparent;--primary-active-bg:rgba(51,112,255,0.12);
+  --accent-gold:transparent;
 }
 
 /* ---- 政企风格 ---- */
 :root[data-skin="gov"] {
-  --primary:#1E3A8A;--primary-hover:#1E40AF;--primary-active:#172554;--primary-light:#DBE5FE;--primary-bg:#EFF4FE;
+  --primary:#1E3A8A;--primary-hover:#1E40AF;--primary-active:#172554;--primary-dark:#172554;--primary-light:#DBE5FE;--primary-bg:#EFF4FE;
   --success:#15803D;--success-light:#DCFCE7;--warning:#B45309;--warning-light:#FEF3C7;--danger:#991B1B;--danger-light:#FEE2E2;
   --text-primary:#0F1E3D;--text-secondary:#475569;--text-tertiary:#64748B;--text-disabled:#94A3B8;
   --bg-body:#F4F1EA;--bg-white:#FFFFFF;--bg-card:#FFFFFF;--bg-hover:#ECEAE3;--bg-active:#E5E1D6;--bg-mask:rgba(15,30,61,0.5);
@@ -716,7 +718,7 @@ CSS：始终用 `var(--primary)`、`var(--gray-200)` 等变量，不硬编码色
 
 /* ---- 党建风格 ---- */
 :root[data-skin="party"] {
-  --primary:#C9302C;--primary-hover:#A82420;--primary-active:#8B1A1A;--primary-light:#FCE4E3;--primary-bg:#FEF1F0;
+  --primary:#C9302C;--primary-hover:#A82420;--primary-active:#8B1A1A;--primary-dark:#8B1A1A;--primary-light:#FCE4E3;--primary-bg:#FEF1F0;
   --success:#15803D;--success-light:#DCFCE7;--warning:#B45309;--warning-light:#FEF3C7;--danger:#991B1B;--danger-light:#FEE2E2;
   --text-primary:#1F1112;--text-secondary:#5C2024;--text-tertiary:#8B5A5F;--text-disabled:#B89A9E;
   --bg-body:#FDF6E3;--bg-white:#FFFFFF;--bg-card:#FFFFFF;--bg-hover:#F5EBD0;--bg-active:#EFE0BD;--bg-mask:rgba(127,29,29,0.5);
@@ -800,8 +802,8 @@ a:hover { color: var(--primary-hover); }
 .sidebar .sidebar-nav-link:hover { background: var(--sidebar-hover); color: var(--sidebar-text-hover); }
 .sidebar .sidebar-nav-link:hover i { color: var(--sidebar-text-hover); }
 .sidebar .sidebar-nav-link.active { background: var(--primary-active-bg); color: var(--sidebar-text-active); font-weight: 500; }
-.sidebar .sidebar-nav-link.active i { color: var(--primary); }
-.sidebar .sidebar-nav-link.active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 16px; background: var(--primary); border-radius: 0 2px 2px 0; }
+.sidebar .sidebar-nav-link.active i { color: #FFFFFF; }
+.sidebar .sidebar-nav-link.active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 16px; background: #FFFFFF; border-radius: 0 2px 2px 0; }
 .sidebar .collapse { padding: 0; }
 .sidebar .collapse .sidebar-nav-link { padding-left: 42px; font-size: var(--font-size-base); }
 .sidebar .sidebar-divider { height: 1px; background: var(--sidebar-divider); margin: var(--space-sm) var(--space-lg); }

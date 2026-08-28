@@ -35,7 +35,7 @@ description: "从零生成完整原型HTML项目（PC管理端 + App移动端 + 
 > 地图决策（**有强制规则，必须遵守**）：
 > - ✅ **加地图（硬规则）**：需求文档中出现**省/市/区/县名**（如"广东省""广州市""天河区"）+ 数据能匹配行政区划 → **必须加地图**，不允许用条形图/饼图替代
 > - ✅ 加地图（一般）：业务涉及地域 / 路径 / 位置 / 区域对比
-> - ❌ 不加地图：纯财务 / 库存 / 系统监控；数据维度是"学院/专业/产品/部门/库存 SKU"等**完全非行政的纯业务维度**（DataV 没有这种地图）
+> - ❌ 不加地图：纯财务 / 库存 / 系统监控；数据维度是"学院/专业/产品/部门/库存 SKU"等**完全非行政的纯业务维度**（行政区划地图没有这种维度）
 > - ⚠️ **关键区分**："高校分布""校区数据"等看起来像非行政维度，但归属在行政区划内（如 21 地市内高校、某市内校区），**视为行政维度的下级**，应加地图展示地域分布；只在地图上以散点/标签标注具体高校即可，不要因"高校"二字否决地图
 > - 地图级别：**按关键词匹配任意一级**（全国→100000 / 省→320000 / **市→320100，最小可到市级**），不要硬性写死"默认国家级"
 > - 初始层级由业务决定（全国 / 省 / 市），最小只能到市级（区县数据量过大、视觉碎片化，不建议作初始层级）
@@ -43,7 +43,7 @@ description: "从零生成完整原型HTML项目（PC管理端 + App移动端 + 
 > **完整骨架 / 组件样式 / 地图组件 / 经验沉淀 见 [references/dashboard.md](references/dashboard.md)**，尤其要读"§1 设计原则（按业务自主判断）"。
 >
 > **视觉风格由主题决定**（不在大屏里硬编码）：
-> - 颜色：所有强调色走 CSS 变量 `--db-accent` 等，**禁止**直接写 `#4DD0E1` 等色值
+> - 颜色：所有强调色走 CSS 变量 `--db-accent` 等，**禁止**直接写 `#4F8AFF` 等色值
 > - 字体大小、密度、是否带 3D 效果由项目主题和业务决定（default 偏科技蓝、gov 偏庄重藏蓝、party 偏红色党旗风）
 > - 数字动效（递增动画、滚动事件流）作为**通用能力**提供，但具体是否使用由业务场景决定
 
@@ -71,7 +71,7 @@ description: "从零生成完整原型HTML项目（PC管理端 + App移动端 + 
 > - 市级作初始时，可下钻到 区/县（**不能**向上回到省/全国）
 > - "当前层级"标识 = `breadcrumbStack[breadcrumbStack.length - 1].name`，**不是固定常量**
 >
-> 这个表**只解决"加地图时用哪一级"**，不解决"是否要加地图"。完整 adcode 速查、URL 模板、ECharts 视觉参数详见 [dashboard.md 6 节](references/dashboard.md#6-地图组件echarts--datav-geojson)。
+> 这个表**只解决"加地图时用哪一级"**，不解决"是否要加地图"。完整 adcode 速查、本地边界路径规则、ECharts 视觉参数详见 [dashboard.md §3.4.1 / §4](references/dashboard.md#341-地图下钻支持按业务需要)。
 
 > **模板代码详见**：[references/examples.md](references/examples.md)，包含 PC 端页面模板、App 端页面模板、登录页/框架页/入口页模板、代码风格范例、附录（CSS/JS 共享资源完整代码）。
 >
@@ -91,6 +91,8 @@ project/
 │   ├── components.css             # 全局组件样式：Header/Sidebar/表格/表单/六态/暗色模式（仅 App 端启用）
 │   ├── components.js              # 30+ 工具函数：状态切换/Toast/确认弹窗/分页/排序/主题
 │   └── assets/                    # CDN 兜底本地资源（如项目已有则保留，新建则跳过）
+├── data/                          # 内置数据（大屏地图边界 GeoJSON，加地图时必须存在）
+│   └── map/boundary/              # china.json + province/ + city/（见 dashboard.md §4.2）
 ├── pc/                            # PC 管理端
 │   ├── index.html                 # 框架页：Header + Sidebar + iframe
 │   ├── index-content.html         # 首页工作台（iframe 默认加载）
@@ -166,7 +168,22 @@ mkdir project/shared
 mkdir project/pc
 mkdir project/app/assets
 mkdir project/login
+mkdir project/data/map/boundary   # 加地图时创建（内置边界数据目录）
 ```
+
+### 第 2.5 步：拷贝地图边界数据（仅当 §1 决定加地图时执行）
+
+> **边界数据从技能素材库拷，不要从外部找**。
+
+技能自带完整的行政区划 GeoJSON（[references/boundary/](references/boundary/)）：`china.json` + `province/`（34 个省级 adcode）+ `city/`（~300 个市级 adcode）。
+
+按业务可视范围拷贝：
+
+| 业务可视范围 | 必须拷贝 |
+|---|---|
+| 国家级（ROOT_ADCODE=100000） | `china.json` + `province/*` |
+| 省级（如 450000） | `china.json` + `province/450000.json` + `city/{该省下辖市}/*` |
+| 市级（如 450100） | `china.json` + `province/450000.json` + `city/450100.json` |
 
 ### 第 3 步：生成共享资源文件
 
@@ -427,9 +444,12 @@ PC 框架页完整模板及 Sidebar 菜单格式参见 [examples.md 五 PC 框�
 
 生成每个页面前确认：
 - [ ] **根导航入口页 `index.html` 严格保持纯净**：① 禁止出现任何技术栈内容（HTML/CSS/JS、Bootstrap、Vue、React、jQuery、CDN 等技术名词一律不写）；② 禁止描述页面风格/UI 特点（如「深色侧边栏+白色顶栏」「390×844 手机框架」「弹窗模式」「六态」「暗色模式」「分页排序」等样式/交互/布局描述）。
+- [ ] **版本号双写**：`version.txt`（项目根）与根 `index.html` 描述行（`vX.Y`）一致；按 [§九 原型版本管理](#九原型版本管理每次对话自动-bump) 自动 bump，并告知用户。
 - [ ] **主题识别已执行（第 0 步）**：仅在"XXX 原型"的系统名称 XXX 中扫描党建/政企类关键词，确定 `data-skin` 值；所有页面（含 PC 框架/业务页/App 页/登录页/根导航页）`<html>` 标签带**统一**的 `data-skin` 属性（默认 `default`）—— 这是**项目级**应用，不是单页设置
 - [ ] **风格总览页已生成且完整**：从零生成项目时，自动创建 `styleguide.html`，**按 [references/styleguide.md](references/styleguide.md) 规范生成**；`data-skin` 与项目主题一致；**所有样式/脚本内联，不引用 shared/ 和 app/ 下的 CSS/JS 文件**；在根 `index.html` 第 4 卡片注册入口；**PC 侧边栏不放"风格总览"菜单**
 - [ ] **主题色全部走 CSS 变量**：未硬编码 `#3370FF` / `#1E3A8A` / `#C9302C` 等主题色，全部用 `var(--primary)` 等变量
+- [ ] **`--primary-dark` 三主题齐全**：`design-tokens.css` 三套主题（`default` / `gov` / `party`）**都必须定义** `--primary-dark` 变量，色值见 [themes.md 第 31 行](references/themes.md)（`#1F4DC4` / `#172554` / `#8B1A1A`），用于登录页背景渐变、根导航 header 渐变等场景；缺一主题则该主题下渐变失效
+- [ ] **default 主题侧边栏走天蓝**：`--sidebar-bg:#1F4DC4`、`--sidebar-hover:#2A5BD4`、`--sidebar-text:rgba(255,255,255,0.85)`、`--primary-active-bg:rgba(255,255,255,0.2)`；`components.css` 激活态菜单图标 / 左边条 `var(--primary)` → `#FFFFFF`（蓝底用蓝色看不见）。gov / party 主题维持原深色。色值见 [themes.md 主题对照表](references/themes.md)
 - [ ] **FOUC 阻止脚本（仅 App 端暗色）**：只有 App 页必须放（含暗色模式 `theme` 读取，**不读 `skin`**）；PC 框架页/PC 内容页/登录页/根导航页/风格总览页都**不放**暗色脚本
 - [ ] `<html lang="zh-CN">`
 - [ ] `<title>[页面名] — [系统名]</title>`
@@ -465,25 +485,25 @@ PC 框架页完整模板及 Sidebar 菜单格式参见 [examples.md 五 PC 框�
 
 - [ ] **Grid/Flex 容器三件套（强制 · 避免图表不可见）**：① 每个 `.db-panel` 必须有 `display:flex; flex-direction:column; min-height:0`；② 每个图表 div 必须有 `min-height` 兜底（220px / 460px）；③ iframe 内嵌时父窗口 resize 后子页面要主动 `chart.resize()`。详见 [dashboard.md §0.3](references/dashboard.md#03-echarts-自适应模板所有图表通用)「Grid/Flex 容器三件套」。**违反此条 = 图表容器高度为 0 = ECharts 渲染失败但 canvas 已存在，看似没内容**
 - [ ] **ECharts 工厂加调试日志**：工厂入口打 `console.log('[Chart] init xxx: WxH')`，便于排查布局问题
-- [ ] **地图占满空余地方**：主区 grid `260px 1fr 260px`（左右业务列不超过 280px）；KPI 砍到 4 个、行高 88px；总 padding 8×12
-- [ ] **地图四象限 UI 元素位置（必须严格遵守，不允许合并堆叠）**：
-  - **左下**：返回上级按钮（`.db-map-back` 单独按钮，初始 `disabled`）
+- [ ] **地图占满空余地方**：主区 grid 左右列 260~340px（不超过 360px）；KPI 4~6 个、行高 88~116px；总 padding 8×12
+- [ ] **地图 UI 元素三角分区（必须严格遵守，不允许合并堆叠）**：
   - **左上**：工具栏（刷新按钮，可放其他次要按钮）
-  - **右上**：面包屑（`.db-map-breadcrumb`，点击任意级跳回）
-  - **右下**：悬浮统计 pill（`.db-map-stats`，订单/车辆/司机汇总）
-  - **禁止**：把"返回按钮 + 刷新按钮"合并到一个左上/右上容器；禁止把面包屑放左上；禁止把悬浮统计放左下（与返回按钮冲突）
-- [ ] **地图交互按钮可点击**：返回按钮、刷新按钮、面包屑项必须加 `pointer-events: auto`，否则会被 canvas + loading 蒙层拦截
+  - **右上**：面包屑（`.db-map-breadcrumb`，点击任意级跳回，即返回上级导航）
+  - **右下**：悬浮统计 pill（`.db-map-stats`，当前级汇总指标，由业务函数更新）
+  - **禁止**：把面包屑放左上；禁止把悬浮统计放左下；**左下不放任何常驻按钮**（返回靠面包屑，不设独立返回按钮）
+- [ ] **地图交互按钮可点击**：刷新按钮、面包屑项必须加 `pointer-events: auto`，否则会被 canvas + loading 蒙层拦截
 - [ ] **地图 label 防撞色三件套（强制）**：默认 label 必须有 `textBorderColor` + `textBorderWidth`（建议加 `textShadow` 双保险）；emphasis/select 用 `#fff` + 更深更粗的描边。否则浅色字糊在主题色透明底上，地名看不清。详见 [dashboard.md §4](references/dashboard.md#4-地图组件仅在-13-决定加地图时使用)「地图 label 颜色防撞色三件套」
-- [ ] **地图容器兜底**：`.db-map { width:100%; height:100%; min-height: 420px }`；init 时若 `clientHeight===0` 强制 min-height；`setTimeout(resize, 200)` 延迟双保险
+- [ ] **地图容器兜底**：`.db-map { width:100%; height:100%; min-height: 480px }`；init 时若 `clientHeight===0` 强制 min-height；`setTimeout(resize, 200)` 延迟双保险
 - [ ] **地图暗夜配色**：边框 `rgba(accent, 0.45)` 半透明；emphasis 边框用 `accent`；**visualMap 配色用 `[rgba(accent, 0.06), rgba(accent, 0.5)]` 二段低透明，禁止 `barBg→accent→accent2` 三段渐变**
 - [ ] **散点 value 结构**：scatter `{ name, value: [lng, lat, bizValue] }` 三元素；`symbolSize: val[2]` 取业务值
 - [ ] **异常处理**：render 包独立 try/catch 区分"加载失败 vs 渲染异常"；catch 文案带 `err.message`；暴露 `window.__dbgMap = { el, chart }` 与 `console.log` 日志
-- [ ] **网络容错**：多 CDN 顺序尝试；国家级内置矩形 GeoJSON 兜底（`buildFallbackCountryGeo()`）；下钻层级失败自动退回国家级 + Toast
-- [ ] **错误三态文案分离**：① loading spinner + "加载 xxx 地图..."；② 错误态显示 `err.message` + "重新加载"按钮；③ demo 模式顶部横幅 "⚠ 当前为演示数据"
+- [ ] **加载失败回退**：本地 `fetch` 边界数据失败时，下钻层级自动退回 `ROOT_ADCODE`（不是固定 100000）；ROOT 失败显示 `err.message`
+- [ ] **错误两态文案分离**：① loading spinner + "地图加载中..."；② 错误态显示 `err.message` + "重新加载"入口
 - [ ] **KPI 数字递增**：保留 `.unit` 子节点，只替换数字文本；用 `data-prefix`/`data-suffix`/`data-decimals` 三个 dataset 属性驱动；`toLocaleString('zh-CN')` 格式化
-- [ ] **ECharts 工厂必须用 `theme.xxx`**：`autoResizeChart(id, factory)` / `autoResizeMap(id, factory)` 的工厂签名统一为 `function(chart, theme)`，所有 `--db-*` 颜色通过 `theme.accent` / `theme.accent2` / `theme.accentWarm` / `theme.text` 等读取；**禁止在工厂内 `var xxx = cv('--db-xxx')` 自行声明**（复制粘贴极易遗漏 → 触发 `xxx is not defined at autoResizeChart`，典型 `accentW`）。详见 [dashboard.md §0.3](references/dashboard.md#03-echarts-自适应模板所有图表通用)
+- [ ] **ECharts 工厂必须用 `theme.xxx`**：`autoResizeChart(id, factory)` 的工厂签名统一为 `function(chart, theme)`，所有 `--db-*` 颜色通过 `theme.accent` / `theme.accent2` / `theme.accentWarm` / `theme.text` 等读取；**禁止在工厂内 `var xxx = cv('--db-xxx')` 自行声明**（复制粘贴极易遗漏 → 触发 `xxx is not defined at autoResizeChart`，典型 `accentW`）。详见 [dashboard.md §0.3](references/dashboard.md#03-echarts-自适应模板所有图表通用)
 - [ ] **visualMap.max 容错**：`if (!isFinite(max) || max <= 0) max = 1` 避免 0 值告警
-- [ ] **初始层级变量化**：业务决定 `ROOT_ADCODE`（全国/省/市，最小到市级），不要硬编码 100000；HTML「当前层级」初值 = `ROOT_NAME`；兜底回退 = `loadLevel(ROOT_ADCODE, ROOT_NAME)`；返回按钮初始 disabled（栈底就是 ROOT）
+- [ ] **初始层级变量化**：业务决定 `ROOT_ADCODE`（全国/省/市，最小到市级），不要硬编码 100000；HTML「当前层级」初值 = `ROOT_NAME`；兜底回退由 `showMap()` 的 catch 退回 ROOT；面包屑首项即 ROOT（栈底），返回上级靠点击面包屑
+- [ ] **JS 健壮性（实战高频踩坑·强制）**：① 每个初始化调用（各业务面板渲染函数、`showMap`、其他 `echarts.init().setOption()`）**必须独立包 try/catch**，单次失败不影响其他面板；② `<script>` 开头必须注册 `window.addEventListener('error', ...)` + `unhandledrejection`，在 `#mapLoading` 等容器显示错误占位；③ 所有 `obj.xxx` 属性路径必须与 §A 业务数据结构对齐（避免 `s.s.x` 这类层级错误触发致命 TypeError）；④ 缩放公式用明确系数（`Math.round(v * 0.5)`），禁止 `Math.round(v/0*)`、`Math.round(v*0)` 等陷阱；⑤ 大屏色值用标准 6 位 hex（如 `#ED6C02`），不要写 8 位错值。详见 [dashboard.md §5.5](references/dashboard.md#55-js-健壮性实战高频踩坑--影响白屏)
 
 ---
 
@@ -502,7 +522,59 @@ PC 框架页完整模板及 Sidebar 菜单格式参见 [examples.md 五 PC 框�
 
 ---
 
-## 九、风格总览页（styleguide.html）
+## 九、原型版本管理（每次对话自动 bump）
+
+每个原型项目维护一个 **语义化版本号** `vX.Y`，贯穿项目生命周期。AI 在每次对话中根据改动范围**自动**调整版本号，无需用户手动指定、无需告知用户。
+
+### 9.1 版本号规则
+
+| 改动类型 | 版本变化 | 示例 |
+|----------|----------|------|
+| **首次创建项目** | 起始 `v1.0` | `v1.0` |
+| **小改动**（修 bug、调样式、文案、字段顺序、按钮配色等不影响功能的微调） | 第三位小数 `+0.1` | `v1.0` → `v1.1` |
+| **极小改动**（单字符修正、单条文案） | 第三位小数 `+0.01` | `v1.1` → `v1.11` |
+| **功能新增**（新增模块、新增页面、新增字段类型） | 主版本 `+1`（次位归 0） | `v1.11` → `v2.0` |
+| **大范围改造**（重构布局、整体框架升级、整体视觉风格切换） | 主版本 `+1`（次位归 0） | `v2.3` → `v3.0` |
+
+> **简化口径**：只在两种粒度间切换 ——
+> - **小改**（含极小改）：`X.Y` → `X.(Y+1)`，跳过小数位细分；如 `v1.1` → `v1.2`
+> - **大改**（功能新增 / 大范围改造）：`X.Y` → `(X+1).0`，如 `v1.2` → `v2.0`
+
+### 9.2 版本号存储位置（双写）
+
+版本号必须**同时**写入两处，二者必须保持一致：
+
+1. **项目根目录 `version.txt`**（机器可读，外部脚本读取用）
+   ```
+   v1.1
+   ```
+   纯文本，单行，仅含版本号字符串。
+
+2. **根 `index.html` 的 header 描述行**（用户可视）
+   ```html
+   <small>[日期] · v1.1 · PC X 页 + App Y 页</small>
+   ```
+
+### 9.3 AI 工作流（每次对话自动执行）
+
+每次接到原型相关请求时，AI 内部按以下流程判断版本变化（**用户无需指定，AI 也无需在回复中告知**）：
+
+1. **读 `version.txt`** 获取当前版本（如 `v1.1`）
+2. **评估本次改动范围**：
+   - 仅是修 bug / 调样式 / 改文案 / 微调字段 → 小改：末位 +1
+   - 新增模块 / 新增页面 / 重构布局 / 整体视觉改造 → 大改：主版本 +1，次位归 0
+3. **更新两处**：`version.txt` + 根 `index.html` 描述行
+4. **无需告知**：版本变化静默生效，不在对话回复中特别说明
+
+### 9.4 异常情况
+
+- **`version.txt` 不存在**（首次生成）→ 视为新项目，写入 `v1.0`
+- **项目从未生成过 `version.txt`** 但根 `index.html` 描述行已有版本号 → 以 `version.txt` 为准，若文件不存在则以描述行为准并补建 `version.txt`
+- **跨项目复用**：版本号与项目绑定，不可跨项目继承
+
+---
+
+## 十、风格总览页（styleguide.html）
 
 从零生成项目时，按 [references/styleguide.md](references/styleguide.md) 规范生成 `styleguide.html`。
 
