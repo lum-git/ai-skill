@@ -1,0 +1,4 @@
+# 公司投标资料库：除本 README 和 .gitignore 外，全部忽略（含敏感资料）
+*
+!README.md
+!.gitignore
