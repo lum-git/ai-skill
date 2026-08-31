@@ -1,5 +1,5 @@
 ---
-name: "原型项目部署"
+name: "sales-project-deploy"
 description: "将构建产物通过 rsync 部署到公司内网 Nginx 服务器。当用户需要部署项目、同步产物到远程预览机、发布到 Nginx 时调用此技能。"
 ---
 
