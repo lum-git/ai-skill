@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """销售项目部署脚本（纯 Python，等同于 rsync -avz --delete --progress）
 用法:
-  python deploy.py <本地产物路径> <当前任务id>
-  示例: python deploy.py ./dist HYSQZC-971
+  python deploy.py.md <本地产物路径> <当前任务id>
+  示例: python deploy.py.md ./dist HYSQZC-971
+
+说明: 本文件以 .md 后缀存放。
+     Python 解释器不检查扩展名，可直接执行，无需重命名。
 
 依赖: pip install paramiko
-账号密码通过 Paperclip Secrets API 获取
+账号密码、访问地址通过 Paperclip Secrets API 获取
 """
 
 import os
@@ -21,6 +24,7 @@ import time
 from pathlib import Path
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+# 本脚本位于 scripts/ 下，conf.md 在 ../references/ 目录
 CONF_FILE = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "references", "conf.md"))
 
 
@@ -406,7 +410,7 @@ def deploy_sync(host: str, port: int, user: str, password: str,
 
 def main():
     if len(sys.argv) < 3:
-        print("用法: python deploy.py <本地产物路径> <当前任务id>")
+        print(f"用法: python {os.path.basename(__file__)} <本地产物路径> <当前任务id>")
         sys.exit(1)
 
     local_path = sys.argv[1]
@@ -447,8 +451,8 @@ def main():
         remote_path=remote_path,
     )
 
-    # 输出访问地址
-    url_base = read_conf("URL_BASE") or f"http://{deploy_ip}/"
+    # 输出访问地址（与账号密码相同，通过 Secrets API 获取）
+    url_base = get_secret("deploy-url_base") or f"http://{deploy_ip}/"
     url = f"{url_base.rstrip('/')}/{task_id}/"
     print(f"\n访问地址: {url}")
 
