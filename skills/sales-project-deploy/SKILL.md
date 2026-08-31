@@ -12,10 +12,10 @@ description: "将构建产物通过 rsync 部署到公司内网 Nginx 服务器�
 ```
 sales-project-deploy/
 ├── SKILL.md
-├── scripts/
-│   └── deploy.py.md          # 部署脚本源码（.md 后缀，可直接用 python 执行）
 └── references/
-    └── conf.md               # 部署参数配置
+    ├── conf.md               # 部署参数配置
+    └── source/
+        └── deploy.py.md      # 部署脚本源码（.md 后缀，可直接用 python 执行）
 ```
 
 所有配置在 [conf.md](./references/conf.md) 中统一管理。账号密码、访问地址前缀通过 Secrets API 实时获取，不落盘。
@@ -60,12 +60,14 @@ Authorization: Bearer {PAPERCLIP_API_KEY}
 
 运行部署脚本（纯 Python，仅需 `pip install paramiko`）。
 
-脚本源码以 `.md` 后缀存放在 `scripts/deploy.py.md`（技能仓库不允许 `.py` 文件）。Python 解释器不检查文件扩展名，**直接执行即可，无需复制或重命名**：
+脚本源码以 `.md` 后缀存放在 `references/source/deploy.py.md`（技能仓库不允许 `.py` 文件）。Python 解释器不检查文件扩展名，**直接执行即可，无需复制或重命名**：
 
 ```bash
-python <技能目录>/scripts/deploy.py.md <本地产物路径> <当前任务id>
-# 示例: python /path/to/sales-project-deploy/scripts/deploy.py.md ./dist HYSQZC-971
+python <技能目录>/references/source/deploy.py.md <本地产物路径> <当前任务id>
+# 示例: python /path/to/sales-project-deploy/references/source/deploy.py.md ./dist HYSQZC-971
 ```
+
+脚本会先校验本地产物路径：目录不存在或为空时直接中止（防止误清空远程目录），此时应先确认构建产物完整再重试。
 
 脚本通过 paramiko SFTP 同步本地目录到远程：
 

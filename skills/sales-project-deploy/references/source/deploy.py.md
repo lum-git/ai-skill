@@ -24,8 +24,8 @@ import time
 from pathlib import Path
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-# 本脚本位于 scripts/ 下，conf.md 在 ../references/ 目录
-CONF_FILE = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "references", "conf.md"))
+# 本脚本位于 references/source/ 下，conf.md 在上一级 references/ 目录
+CONF_FILE = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "conf.md"))
 
 
 def read_conf(key: str) -> str:
@@ -415,6 +415,14 @@ def main():
 
     local_path = sys.argv[1]
     task_id = sys.argv[2]
+
+    # 安全校验：产物目录无效或为空时中止，防止远程目录被整体清空
+    if not os.path.isdir(local_path):
+        print(f"错误: 本地产物路径不存在或不是目录: {local_path}")
+        sys.exit(1)
+    if not walk_local(local_path):
+        print("错误: 本地产物目录为空（构建可能未完成），已中止以防误清空远程目录")
+        sys.exit(1)
 
     print("正在获取账号密码...")
     deploy_account = get_secret("deploy-deploy_account")
