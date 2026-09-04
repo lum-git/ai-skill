@@ -18,6 +18,7 @@
 |-------|------|------|
 | prototype-generator | [skills/prototype-generator/SKILL.md](skills/prototype-generator/SKILL.md) | 从零生成完整原型 HTML 项目，支持三套主题风格（默认/政企/党建）和新增模块 |
 | sales-project-deploy | [skills/sales-project-deploy/SKILL.md](skills/sales-project-deploy/SKILL.md) | 将构建产物通过 paramiko 部署到公司内网 Nginx 服务器 |
+| zhaocai-test-deploy | [skills/zhaocai-test-deploy/SKILL.md](skills/zhaocai-test-deploy/SKILL.md) | 部署集团招采（jt12302）测试环境：Gradle 构建 WAR → Docker 镜像（配置替换）→ 启动容器 |
 
 ---
 
@@ -30,6 +31,7 @@
 | **双端覆盖** | PC 管理端（iframe SPA）+ App 移动端（手机模型框架）+ 登录页 |
 | **三套主题风格** | 默认品牌蓝 / 政企藏蓝 / 党建党旗红，关键词自动识别，生成时固定 |
 | **项目部署** | paramiko（SFTP）部署到 Nginx，等效 rsync -avz --delete --progress |
+| **招采后端部署** | Gradle 容器构建 WAR → Docker 制镜像（自动替换 Redis/数据库配置）→ 启动容器，镜像保留最近 2 版 |
 
 ---
 
@@ -151,6 +153,12 @@ skills/
         ├── conf.md                    # 部署参数配置（IP/端口/远程路径/访问地址前缀）
         └── source/
             └── deploy.py.md           # 部署执行脚本（Python paramiko，等效 rsync -avz --delete）
+└── zhaocai-test-deploy/
+    ├── SKILL.md                       # Skill 定义：招采测试环境部署流程
+    └── references/
+        ├── conf.md                    # 部署参数配置（项目名/端口/路径/镜像/配置替换对）
+        └── source/
+            └── deploy.sh.md           # 部署执行脚本（bash：Gradle 构建 WAR + Docker 制镜像 + 启动容器）
 ```
 
 ---
@@ -165,6 +173,7 @@ skills/
 | 新增模块 | "在现有项目中添加XXX功能" | 按规范新增页面并注册到框架 |
 | 修改页面 | "修改XXX列表页/详情页" | 基于现有模板修改业务页面 |
 | 项目部署 | "部署项目到Nginx"/"发布" | 通过 paramiko 将构建产物同步到远程服务器 |
+| 招采后端部署 | "部署集团招采测试环境"/"更新招采后端"/"重新构建jt12302" | Gradle 构建制镜像并启动容器（数据库密码走 Secrets API） |
 
 ---
 

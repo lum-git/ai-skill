@@ -78,6 +78,20 @@ AI Skill 技能集合（ai-skill）
 | 部署子目录 | 以**当前任务 id** 命名（如 `HYSQZC-971`） |
 | 依赖 | `pip install paramiko`（纯 Python，无需 rsync/sshpass） |
 
+### 3. zhaocai-test-deploy — 集团招采测试环境部署
+
+将集团招采系统（jt12302 后端 WAR）部署到测试环境。
+
+| 特性 | 说明 |
+|------|------|
+| 构建方式 | Gradle 容器构建 WAR（`gradle clean build -PskipTests`，跳过测试） |
+| 运行镜像 | tomcat 8.5.71 + jdk8 基础镜像，WAR 解压至 webapps/ROOT |
+| 配置替换 | Dockerfile 内 sed 替换 Redis 地址、数据库地址/端口/库名/密码（构建环境 → 测试环境） |
+| 数据库密码 | 通过 Secrets API 运行时获取（`zhaocai-db_password_from` / `zhaocai-db_password_to`），不落盘 |
+| 镜像版本 | 以当天日期（YYYYMMDD）为 tag，自动清理仅保留最近 2 个版本 |
+| 容器端口 | `12302 → 8080`，附件与日志挂载宿主机 `/data/zhaocai/webapps/` |
+| 部署方式 | `bash references/source/deploy.sh.md [--skip-build]`（.md 后缀脚本直接执行） |
+
 ## Skill 文件结构
 
 ```
@@ -108,6 +122,12 @@ skills/
         ├── conf.md                    # 部署参数配置（IP/端口/远程路径/访问地址前缀）
         └── source/
             └── deploy.py.md           # 部署执行脚本（Python paramiko）
+└── zhaocai-test-deploy/
+    ├── SKILL.md                       # Skill 定义：招采测试环境部署流程
+    └── references/
+        ├── conf.md                    # 部署参数配置（项目名/端口/路径/镜像/配置替换对）
+        └── source/
+            └── deploy.sh.md           # 部署执行脚本（bash：Gradle 构建 + Docker 制镜像 + 启动容器）
 ```
 
 ## 使用方式
@@ -174,6 +194,7 @@ AI 会：
 
 - prototype-generator：Skill 定义已完成，参考模板完整（含三套主题规范 + 4 个独立预览样式模板 + 附录完整代码），生成流水线就绪
 - sales-project-deploy：Skill 定义已完成，deploy.py 脚本和 conf.md 配置就绪
+- zhaocai-test-deploy：Skill 定义已完成，deploy.sh 脚本和 conf.md 配置就绪（需预先在 Secrets API 配置 `zhaocai-db_password_from` / `zhaocai-db_password_to`）
 
 ## 开源协议
 
