@@ -90,6 +90,7 @@ metadata:                       # 可选：任意元数据（其余字段原样�
 | 内容类型 | 存放位置 | 说明 |
 |---|---|---|
 | 非敏感配置（IP/端口/路径/地图 Key） | `references/conf.md` 或 `references/config.md` | markdown 表格（`` `KEY` \| `value` ``）或 `KEY=value` 行；脚本内用正则解析（`read_conf`，按 `__file__` 相对路径定位） |
+| 环境专属参数（服务器地址/端口/账号/密码/构建分支等） | 技能文件中写 Paperclip `{env:VAR}` 引用 | 运行时从同名环境变量解析，不在技能文件中存明文；取值优先级：用户对话指定 > 环境变量 > 询问用户。范本：`zhaocai-test-deploy` 的 `TEST_SERVER_HOST`、`TEST_SERVER_PORT`、`TEST_SERVER_ACCOUNT`、`TEST_SERVER_PASSWORD`、`TEST_GIT_BRANCH`、`TEST_REDIS_HOST`、`TEST_DB_HOST`、`TEST_DB_PORT`、`TEST_DB_NAME` |
 | 账号密码等凭据 | Paperclip Secrets API 运行时获取 | `POST {PAPERCLIP_API_URL}/api/agents/me/secrets/{key}/value`（Bearer 认证），**不落盘** |
 | 公司资料/业务数据 | 项目侧目录（如 `bid-data/`） | **skill 内不放任何公司数据**，只放规范和模板；项目数据按固定目录规则读取 |
 

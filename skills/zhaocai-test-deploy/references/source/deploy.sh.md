@@ -12,7 +12,9 @@
 #
 # 依赖: 招采测试服务器上的 docker。数据库密码通过 Paperclip Secrets API
 #      获取（需 PAPERCLIP_API_URL / PAPERCLIP_API_KEY 环境变量，
-#      也可用 DB_PWD_FROM / DB_PWD_TO 环境变量直接传入）
+#      也可用 DB_PWD_FROM / DB_PWD_TO 环境变量直接传入）。
+#      conf.md 中 {env:VAR} 形式的值在运行时解析同名环境变量
+#      （用户在对话中指定的值也以环境变量方式传入，优先级最高）
 # =====================================================================
 
 set -o pipefail
@@ -25,11 +27,21 @@ CONF_FILE="$SCRIPT_DIR/../conf.md"
 die() { echo "错误: $*" >&2; exit 1; }
 log()  { echo; echo "==> $*"; }
 
-# 从 conf.md 表格中读取 `KEY` | `value` 形式的配置值
+# 从 conf.md 表格中读取 `KEY` | `value` 形式的配置值。
+# 值支持 Paperclip {env:VAR} 引用: 运行时解析同名环境变量；
+# 用户在对话中指定的值由 Agent 以环境变量方式传入（优先级最高）。
 read_conf() {
-  local key="$1"
+  local key="$1" val
   [ -f "$CONF_FILE" ] || die "配置文件不存在: $CONF_FILE"
-  sed -n 's/^| *`'"$key"'` *| *`\([^`]*\)`.*$/\1/p' "$CONF_FILE" | head -n 1
+  val=$(sed -n 's/^| *`'"$key"'` *| *`\([^`]*\)`.*$/\1/p' "$CONF_FILE" | head -n 1)
+  # 解析 {env:VAR} 引用（支持整值引用，也支持嵌在字符串中）
+  while [[ "$val" =~ \{env:([A-Za-z_][A-Za-z0-9_]*)\} ]]; do
+    local var="${BASH_REMATCH[1]}"
+    local env_val="${!var:-}"
+    [ -n "$env_val" ] || die "配置 $key 引用的环境变量 $var 未设置（用户未提供时需在运行环境配置同名环境变量）"
+    val="${val/\{env:$var\}/$env_val}"
+  done
+  printf '%s' "$val"
 }
 
 # 转义 sed 特殊字符（/ & \ . * $），密码含特殊字符时保证替换正确
@@ -74,10 +86,10 @@ GRADLE_CD_DIR=$(read_conf GRADLE_CD_DIR)
 WAR_DIR=$(read_conf WAR_DIR)
 GRADLE_REP=$(read_conf GRADLE_REP)
 WEBAPPS_ROOT=$(read_conf WEBAPPS_ROOT)
-REDIS_FROM=$(read_conf REDIS_FROM); REDIS_TO=$(read_conf REDIS_TO)
-DB_HOST_FROM=$(read_conf DB_HOST_FROM); DB_HOST_TO=$(read_conf DB_HOST_TO)
-DB_PORT_FROM=$(read_conf DB_PORT_FROM); DB_PORT_TO=$(read_conf DB_PORT_TO)
-DB_NAME_FROM=$(read_conf DB_NAME_FROM); DB_NAME_TO=$(read_conf DB_NAME_TO)
+REDIS_FROM=$(read_conf REDIS_FROM); TEST_REDIS_HOST=$(read_conf TEST_REDIS_HOST)
+DB_HOST_FROM=$(read_conf DB_HOST_FROM); TEST_DB_HOST=$(read_conf TEST_DB_HOST)
+DB_PORT_FROM=$(read_conf DB_PORT_FROM); TEST_DB_PORT=$(read_conf TEST_DB_PORT)
+DB_NAME_FROM=$(read_conf DB_NAME_FROM); TEST_DB_NAME=$(read_conf TEST_DB_NAME)
 
 [ -n "$PROJ" ] || die "conf.md 缺少 PROJ"
 [ -n "$PORT" ] || die "conf.md 缺少 PORT"
@@ -156,13 +168,13 @@ RUN unzip -q -a -o /usr/local/tomcat/webapps/ROOT/$PROJ.war -d /usr/local/tomcat
 RUN rm -rf /usr/local/tomcat/webapps/ROOT/$PROJ.war
 
 # redis 地址（构建环境 → 测试环境）
-RUN sed -i "s/$REDIS_FROM/$REDIS_TO/g" \$(grep $REDIS_FROM -rl /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/application.properties) || true
+RUN sed -i "s/$REDIS_FROM/$TEST_REDIS_HOST/g" \$(grep $REDIS_FROM -rl /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/application.properties) || true
 # 数据库地址
-RUN sed -i "s/$DB_HOST_FROM/$DB_HOST_TO/g" \$(grep $DB_HOST_FROM -rl /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/application.properties) || true
+RUN sed -i "s/$DB_HOST_FROM/$TEST_DB_HOST/g" \$(grep $DB_HOST_FROM -rl /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/application.properties) || true
 # 数据库端口
-RUN sed -i "s/$DB_PORT_FROM/$DB_PORT_TO/g" \$(grep $DB_PORT_FROM -rl /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/application.properties) || true
+RUN sed -i "s/$DB_PORT_FROM/$TEST_DB_PORT/g" \$(grep $DB_PORT_FROM -rl /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/application.properties) || true
 # 数据库名称
-RUN sed -i "s/$DB_NAME_FROM/$DB_NAME_TO/g" \$(grep $DB_NAME_FROM -rl /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/application.properties) || true
+RUN sed -i "s/$DB_NAME_FROM/$TEST_DB_NAME/g" \$(grep $DB_NAME_FROM -rl /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/application.properties) || true
 # 数据库密码
 RUN sed -i "s/$PWD_FROM_ESC/$PWD_TO_ESC/g" \$(grep "$PWD_FROM_ESC" -rl /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/application.properties) || true
 # 数据库账号（默认相同，无需替换）

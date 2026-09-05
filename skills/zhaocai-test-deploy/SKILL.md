@@ -26,7 +26,7 @@ zhaocai-test-deploy/
 
 ### 1. 读取配置
 
-从 [conf.md](./references/conf.md) 读取项目名 `PROJ`、端口 `PORT` 及路径、镜像、配置替换对。更换部署项目时只需修改 conf.md，脚本无需改动。
+所有部署参数统一从 [conf.md](./references/conf.md) 读取：项目名/端口/路径/镜像、构建服务器地址（`TEST_SERVER_HOST`）、服务器端口（`TEST_SERVER_PORT`）、服务器账号（`TEST_SERVER_ACCOUNT`）、服务器密码（`TEST_SERVER_PASSWORD`）、构建分支（`TEST_GIT_BRANCH`）、配置替换对。用户在对话中明确指定的值优先于配置默认值；各参数的取值机制（`{env:...}` 环境变量引用、缺省值、传入方法）见 conf.md 对应小节说明。
 
 ### 2. 获取数据库密码
 
@@ -58,7 +58,7 @@ bash <技能目录>/references/source/deploy.sh.md --skip-build
 1. Gradle 容器构建 WAR（`gradle clean build --parallel -PskipTests`，跳过测试）
 2. WAR 校验：构建失败立即中止，**不影响正在运行的旧容器**
 3. 停旧容器 → 删当日旧镜像 → 清理历史镜像（只保留最近 2 个版本）
-4. 生成 Dockerfile：tomcat 基础镜像 + 解压 WAR + **替换配置**（Redis 地址、数据库地址/端口/库名/密码，构建环境 → 测试环境）+ 清理冲突 jar
+4. 生成 Dockerfile：tomcat 基础镜像 + 解压 WAR + **替换配置**（Redis 地址、数据库地址/端口/库名/密码，构建环境 → 测试环境，替换对定义见 conf.md）+ 清理冲突 jar
 5. 制作镜像 `{PROJ}:YYYYMMDD` 并启动容器（端口 `{PORT} → 8080`，挂载附件与日志目录）
 
 ### 5. 验证结果
@@ -69,8 +69,8 @@ bash <技能目录>/references/source/deploy.sh.md --skip-build
 
 | 约束 | 说明 |
 |------|------|
-| 代码来源 | 工作区代码通过 **GitLab 拉取**维护，存放在宿主机 `/home/data/jenkins-slave/workspace/zhaocai/{PROJ}/`；脚本不执行 git pull，部署前需确认已拉取到目标版本 |
-| 执行位置 | 必须在**有 docker 权限的招采测试服务器**上执行（脚本直接操作本机 docker） |
+| 代码来源 | 工作区代码通过 **GitLab 拉取**维护，存放在宿主机 `/home/data/jenkins-slave/workspace/zhaocai/{PROJ}/`；脚本不执行 git pull，部署前需确认代码已切换到目标分支（默认 `TEST_GIT_BRANCH`）并拉取到最新 |
+| 执行位置 | 在构建服务器（`TEST_SERVER_HOST`，用户指定优先）上执行，脚本直接操作该机 docker；Agent 不在该服务器上时需先通过 SSH 连接（端口 `TEST_SERVER_PORT`，账号密码 `TEST_SERVER_ACCOUNT` / `TEST_SERVER_PASSWORD`，均用户指定优先） |
 | 镜像版本 | 以当天日期（YYYYMMDD）为版本号；同日重复部署会先删当日旧镜像再重建 |
 | 镜像保留 | 只保留最近 2 个版本，更早版本自动清理 |
 | 数据持久化 | 附件（`s/upload`）与日志挂载宿主机 `/data/zhaocai/webapps/`，重建容器不丢失 |
