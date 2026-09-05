@@ -19,6 +19,7 @@
 | prototype-generator | [skills/prototype-generator/SKILL.md](skills/prototype-generator/SKILL.md) | 从零生成完整原型 HTML 项目，支持三套主题风格（默认/政企/党建）和新增模块 |
 | sales-project-deploy | [skills/sales-project-deploy/SKILL.md](skills/sales-project-deploy/SKILL.md) | 将构建产物通过 paramiko 部署到公司内网 Nginx 服务器 |
 | zhaocai-test-deploy | [skills/zhaocai-test-deploy/SKILL.md](skills/zhaocai-test-deploy/SKILL.md) | 部署集团招采（jt12302）测试环境：Gradle 构建 WAR → Docker 镜像（配置替换）→ 启动容器 |
+| daily-user-task-report | [skills/daily-user-task-report/SKILL.md](skills/daily-user-task-report/SKILL.md) | 每日用户任务创建日报：用 board 凭证遍历所有公司，统计所有真人用户今天人工创建的任务，生成 Markdown 日报（评论 + 附件 + 钉钉推送） |
 
 ---
 
