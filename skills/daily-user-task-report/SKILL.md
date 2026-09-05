@@ -16,14 +16,13 @@ description: >
 
 统计今天（Asia/Shanghai 时区 00:00:00 至当前时刻）由角色为 Operator 或 Admin 的用户通过 Paperclip Web UI 人工创建的任务，按创建人分组、组内按公司分组，生成 Markdown 日报，保存为当前任务的评论 + Markdown 附件，并推送到钉钉机器人。
 
-## 前置条件（凭证获取方式）
+## 前置条件
 
-1. 环境变量（Paperclip 运行时自动注入，无需人工配置）：
-   - `PAPERCLIP_API_URL`：Paperclip API 基地址；
-   - `PAPERCLIP_API_KEY`：本 agent 的 API 凭证，所有 Paperclip API 调用统一携带请求头 `Authorization: Bearer ${PAPERCLIP_API_KEY}`。
-2. 钉钉机器人 access_token（`ACCESS_TOKEN`）：取 Secrets 中配置的值——通过 Secrets API 读取（管理员需先在 Company Settings → Secrets 创建 key 为 `ACCESS_TOKEN` 的 secret，并经该 secret 的 Agent access 面板授权给本 agent；交付方式需选 api 或 both，若为 env 则运行环境中直接存在 `ACCESS_TOKEN` 环境变量、可直接读取），取响应 JSON 的 `value` 字段；取不到时在当前任务评论中说明"无法获取 ACCESS_TOKEN"后停止执行（调用方式见第 6 步 6.1）。
-3. 工具：curl 与 jq（环境缺失时用等价方式实现 HTTP 请求与 JSON 处理；`date -d` 为 GNU 语法，macOS/BSD 环境改用等价命令如 `date -j`）。
-4. 通用错误处理：任一 Paperclip API 调用返回非 2xx 时，在当前任务评论中说明失败的端点与 HTTP 状态码后停止执行，不要静默跳过或用空数据继续生成报告。
+1. 环境变量（由调用本技能的例程 Secrets 或 agent 环境变量提供；缺失时在当前任务评论中说明缺少哪个变量，然后停止执行）：
+   - `BOARD_API_KEY`：Paperclip Board API Token（用于列出全部公司并跨公司查询数据）；
+   - `ACCESS_TOKEN`：钉钉机器人 access_token（自定义 Webhook 接入；安全设置为自定义关键词 `ai`，推送消息必须包含该关键词）。
+2. API 基地址 `PAPERCLIP_API`：你运行环境中的 Paperclip 实例地址（如 `http://localhost:3100`）。
+3. 工具：curl 与 jq（环境缺失时用等价方式实现 HTTP 请求与 JSON 处理）。
 
 ## 准备
 
@@ -36,33 +35,27 @@ TODAY=$(TZ=Asia/Shanghai date +%F)                                              
 ```
 
 2. 确定当前任务（你正在执行、调用本技能的 issue，可能是例程执行任务或手动分派的任务）的 `ISSUE_ID` 与其所属公司 `ISSUE_COMPANY_ID`（从你的运行上下文获取）。
+3. Paperclip API 请求统一携带请求头 `Authorization: Bearer ${BOARD_API_KEY}`（未配置该变量时省略此头，适用于本地免认证实例）。
 
-## 第 1 步：确定统计公司
-
-Agent 凭证只能访问本 agent 所属的公司（`GET /api/companies` 为 board-only 路由，agent 不可用），因此统计范围为本 agent 所属公司。
+## 第 1 步：列出所有公司
 
 ```bash
-# 1.1 本 agent 记录 → companyId
-curl -s -H "Authorization: Bearer ${PAPERCLIP_API_KEY}" \
-  "${PAPERCLIP_API_URL}/api/agents/me"
-
-# 1.2 公司详情 → name（报告中的公司名称）
-curl -s -H "Authorization: Bearer ${PAPERCLIP_API_KEY}" \
-  "${PAPERCLIP_API_URL}/api/companies/${COMPANY_ID}"
+curl -s -H "Authorization: Bearer ${BOARD_API_KEY}" \
+  "${PAPERCLIP_API}/api/companies"
 ```
 
-记下 `COMPANY_ID` 与公司名称，后续步骤均针对该公司执行。
+从响应数组提取每个公司的 `id`、`name`，作为待遍历公司清单。
 
-## 第 2 步：筛选应统计的用户
+## 第 2 步：筛选应统计的用户（逐公司）
 
 ```bash
 # 2.1 用户目录
-curl -s -H "Authorization: Bearer ${PAPERCLIP_API_KEY}" \
-  "${PAPERCLIP_API_URL}/api/companies/${COMPANY_ID}/user-directory"
+curl -s -H "Authorization: Bearer ${BOARD_API_KEY}" \
+  "${PAPERCLIP_API}/api/companies/${COMPANY_ID}/user-directory"
 
 # 2.2 逐个用户读取角色（SLUG 来自 2.1 结果）
-curl -s -H "Authorization: Bearer ${PAPERCLIP_API_KEY}" \
-  "${PAPERCLIP_API_URL}/api/companies/${COMPANY_ID}/users/${SLUG}/profile"
+curl -s -H "Authorization: Bearer ${BOARD_API_KEY}" \
+  "${PAPERCLIP_API}/api/companies/${COMPANY_ID}/users/${SLUG}/profile"
 ```
 
 处理规则：
@@ -70,11 +63,11 @@ curl -s -H "Authorization: Bearer ${PAPERCLIP_API_KEY}" \
 - 排除系统账号：`slug = 'local-board'` 或 `email = 'local@paperclip.local'`；
 - 产出两份数据：`USER_IDS`（该公司符合条件的 userId JSON 数组，形如 `["usr_xxx","usr_yyy"]`）、`USER_NAMES`（userId → 真实姓名映射）。
 
-## 第 3 步：查询今天人工创建的任务
+## 第 3 步：查询今天人工创建的任务（逐公司）
 
 ```bash
-curl -s -H "Authorization: Bearer ${PAPERCLIP_API_KEY}" \
-  "${PAPERCLIP_API_URL}/api/companies/${COMPANY_ID}/issues?limit=200"
+curl -s -H "Authorization: Bearer ${BOARD_API_KEY}" \
+  "${PAPERCLIP_API}/api/companies/${COMPANY_ID}/issues?limit=200"
 ```
 
 返回条数等于 `limit` 时，追加 `&offset=200`（每次递增 200）继续拉取，直至取全。
@@ -82,8 +75,8 @@ curl -s -H "Authorization: Bearer ${PAPERCLIP_API_KEY}" \
 对结果按以下条件过滤（jq 参考实现）：
 
 ```bash
-curl -s -H "Authorization: Bearer ${PAPERCLIP_API_KEY}" \
-  "${PAPERCLIP_API_URL}/api/companies/${COMPANY_ID}/issues?limit=200" \
+curl -s -H "Authorization: Bearer ${BOARD_API_KEY}" \
+  "${PAPERCLIP_API}/api/companies/${COMPANY_ID}/issues?limit=200" \
 | jq --arg start "$START_TIME" --arg end "$END_TIME" --argjson users "$USER_IDS" '
     [.[] | select(
         .createdByUserId != null
@@ -101,7 +94,7 @@ curl -s -H "Authorization: Bearer ${PAPERCLIP_API_KEY}" \
 
 ## 第 4 步：统计并生成报告
 
-数据组织：按创建人分组，同一用户的任务再按公司分组（本技能统计范围为第 1 步确定的公司，公司层级标题照常输出）。
+数据组织：按创建人分组，同一用户的任务再按公司分组。
 
 每个用户级与公司级各计算一组指标：
 - 创建总数（该范围内全部任务，不限状态）；
@@ -112,7 +105,7 @@ curl -s -H "Authorization: Bearer ${PAPERCLIP_API_KEY}" \
 
 每个任务输出一行，含三个要素：
 - 任务名称：`title`（附 `identifier`，如 PAP-39）；
-- 耗时：`status = 'done'` 时取 `completedAt - createdAt`；其他状态取"当前时刻 - createdAt"；格式化为"X 小时 Y 分钟"（不足 1 小时显示"Y 分钟"）；若第 3 步列表响应未包含 `completedAt`，对 done 任务先调 `GET /api/issues/{issueId}` 补全该字段再计算；
+- 耗时：`status = 'done'` 时取 `completedAt - createdAt`；其他状态取"当前时刻 - createdAt"；格式化为"X 小时 Y 分钟"（不足 1 小时显示"Y 分钟"）；
 - 完成情况：done=已完成、in_progress=进行中、in_review=评审中、blocked=已堵塞、todo=待办、backlog=积压、cancelled=已取消。
 
 报告 Markdown 格式（严格按此模板）：
@@ -137,30 +130,21 @@ curl -s -H "Authorization: Bearer ${PAPERCLIP_API_KEY}" \
 ```bash
 # 5.1 发布评论（用 jq 构造请求体，避免转义问题）
 curl -s -X POST \
-  -H "Authorization: Bearer ${PAPERCLIP_API_KEY}" -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${BOARD_API_KEY}" -H "Content-Type: application/json" \
   -d "$(jq -n --arg body "$REPORT" '{body: $body}')" \
-  "${PAPERCLIP_API_URL}/api/issues/${ISSUE_ID}/comments"
+  "${PAPERCLIP_API}/api/issues/${ISSUE_ID}/comments"
 
 # 5.2 写入本地文件并上传为附件（multipart/form-data，文件字段名 file）
 printf '%s' "$REPORT" > "用户任务创建日报-${TODAY}.md"
 curl -s -X POST \
-  -H "Authorization: Bearer ${PAPERCLIP_API_KEY}" \
+  -H "Authorization: Bearer ${BOARD_API_KEY}" \
   -F "file=@用户任务创建日报-${TODAY}.md;type=text/markdown" \
-  "${PAPERCLIP_API_URL}/api/companies/${ISSUE_COMPANY_ID}/issues/${ISSUE_ID}/attachments"
-rm -f "用户任务创建日报-${TODAY}.md"   # 上传后清理，避免工作区文件堆积
+  "${PAPERCLIP_API}/api/companies/${ISSUE_COMPANY_ID}/issues/${ISSUE_ID}/attachments"
 ```
 
 ## 第 6 步：推送钉钉（自定义 Webhook，关键词校验）
 
 ```bash
-# 6.1 获取 access_token（取 Secrets 中配置的值，经 Secrets API 读取）
-ACCESS_TOKEN=$(curl -s -X POST \
-  -H "Authorization: Bearer ${PAPERCLIP_API_KEY}" \
-  "${PAPERCLIP_API_URL}/api/agents/me/secrets/ACCESS_TOKEN/value" | jq -r '.value // empty')
-```
-
-```bash
-# 6.2 推送
 REPORT_TEXT="${REPORT}
 
 > 本日报由 ai 例程机器人自动推送"
@@ -197,9 +181,7 @@ curl -s -X POST \
 
 ```bash
 curl -s -X PATCH \
-  -H "Authorization: Bearer ${PAPERCLIP_API_KEY}" -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${BOARD_API_KEY}" -H "Content-Type: application/json" \
   -d '{"status":"done","comment":"日报已生成、保存并推送完成"}' \
-  "${PAPERCLIP_API_URL}/api/issues/${ISSUE_ID}"
+  "${PAPERCLIP_API}/api/issues/${ISSUE_ID}"
 ```
-
-若评论或状态更新返回 401/403 并提示需要 run id，为请求追加 `X-Paperclip-Run-Id` 头（取自本次运行上下文）后重试。
